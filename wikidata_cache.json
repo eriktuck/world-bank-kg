@@ -1,0 +1,208 @@
+{
+  "countries": {
+    "Q43": [
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P30",
+        "object": "http://www.wikidata.org/entity/Q48",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q256",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P38",
+        "object": "http://www.wikidata.org/entity/Q172872",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q49892",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q179164",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P1082",
+        "object": "85372377",
+        "type": "literal"
+      }
+    ],
+    "Q786": [
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P30",
+        "object": "http://www.wikidata.org/entity/Q49",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q1321",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P38",
+        "object": "http://www.wikidata.org/entity/Q242922",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P1082",
+        "object": "10760028",
+        "type": "literal"
+      }
+    ],
+    "Q155": [
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P30",
+        "object": "http://www.wikidata.org/entity/Q18",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q5146",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P38",
+        "object": "http://www.wikidata.org/entity/Q173117",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q49892",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q188759",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q512187",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P1082",
+        "object": "203062512",
+        "type": "literal"
+      }
+    ],
+    "Q783": [
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P30",
+        "object": "http://www.wikidata.org/entity/Q49",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q1321",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P38",
+        "object": "http://www.wikidata.org/entity/Q4719",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q7270",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P1082",
+        "object": "8303771",
+        "type": "literal"
+      }
+    ],
+    "Q414": [
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P30",
+        "object": "http://www.wikidata.org/entity/Q18",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q1321",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P38",
+        "object": "http://www.wikidata.org/entity/Q199578",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q512187",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P1082",
+        "object": "47327407",
+        "type": "literal"
+      }
+    ],
+    "Q668": [
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P30",
+        "object": "http://www.wikidata.org/entity/Q48",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q1568",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P37",
+        "object": "http://www.wikidata.org/entity/Q1860",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P38",
+        "object": "http://www.wikidata.org/entity/Q80524",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q512187",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P122",
+        "object": "http://www.wikidata.org/entity/Q3043547",
+        "type": "uri"
+      },
+      {
+        "predicate": "http://www.wikidata.org/prop/direct/P1082",
+        "object": "1326093247",
+        "type": "literal"
+      }
+    ]
+  },
+  "entities": {
+    "http://www.wikidata.org/entity/Q48": "Asia",
+    "http://www.wikidata.org/entity/Q256": "Turkish",
+    "http://www.wikidata.org/entity/Q172872": "Turkish lira",
+    "http://www.wikidata.org/entity/Q49892": "presidential system",
+    "http://www.wikidata.org/entity/Q179164": "unitary state",
+    "http://www.wikidata.org/entity/Q49": "North America",
+    "http://www.wikidata.org/entity/Q1321": "Spanish",
+    "http://www.wikidata.org/entity/Q242922": "Dominican peso",
+    "http://www.wikidata.org/entity/Q18": "South America",
+    "http://www.wikidata.org/entity/Q5146": "Portuguese",
+    "http://www.wikidata.org/entity/Q173117": "Brazilian real",
+    "http://www.wikidata.org/entity/Q188759": "representative democracy",
+    "http://www.wikidata.org/entity/Q512187": "federal republic",
+    "http://www.wikidata.org/entity/Q4719": "Honduran lempira",
+    "http://www.wikidata.org/entity/Q7270": "republic",
+    "http://www.wikidata.org/entity/Q199578": "Argentine convertible peso",
+    "http://www.wikidata.org/entity/Q1568": "Hindi",
+    "http://www.wikidata.org/entity/Q1860": "English",
+    "http://www.wikidata.org/entity/Q80524": "Indian rupee",
+    "http://www.wikidata.org/entity/Q3043547": "parliamentary democracy"
+  }
+}

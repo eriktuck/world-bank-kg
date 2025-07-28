@@ -1,0 +1,446 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema1: <http://schema.org/> .
+
+schema1:Argentina a rdfs:Class ;
+    rdfs:label "Argentina"@en ;
+    schema1:wd_RUI <http://www.wikidata.org/entity/Q414> ;
+    rdfs:subClassOf schema1:country .
+
+schema1:Brazil a rdfs:Class ;
+    rdfs:label "Brazil"@en ;
+    schema1:wd_RUI <http://www.wikidata.org/entity/Q155> ;
+    rdfs:subClassOf schema1:country .
+
+schema1:Dominican_Republic a rdfs:Class ;
+    rdfs:label "Dominican_Republic"@en ;
+    rdfs:subClassOf schema1:country .
+
+schema1:Environmental_and_Social_Commitment_Plan a rdfs:Class ;
+    rdfs:label "Environmental_and_Social_Commitment_Plan"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Environmental_and_Social_Review_Summary a rdfs:Class ;
+    rdfs:label "Environmental_and_Social_Review_Summary"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Honduras a rdfs:Class ;
+    rdfs:label "Honduras"@en ;
+    schema1:wd_RUI <http://www.wikidata.org/entity/Q783> ;
+    rdfs:subClassOf schema1:country .
+
+schema1:Implementation_Status_and_Results_Report a rdfs:Class ;
+    rdfs:label "Implementation_Status_and_Results_Report"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:India a rdfs:Class ;
+    rdfs:label "India"@en ;
+    schema1:wd_RUI <http://www.wikidata.org/entity/Q668> ;
+    rdfs:subClassOf schema1:country .
+
+schema1:Procurement_Plan a rdfs:Class ;
+    rdfs:label "Procurement_Plan"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Program_Document a rdfs:Class ;
+    rdfs:label "Program_Document"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Program_for_Results_Environmental_and_Social_Systems_Assessment a rdfs:Class ;
+    rdfs:label "Program_for_Results_Environmental_and_Social_Systems_Assessment"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Project_Paper a rdfs:Class ;
+    rdfs:label "Project_Paper"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Stakeholder_Engagement_Plan a rdfs:Class ;
+    rdfs:label "Stakeholder_Engagement_Plan"@en ;
+    rdfs:subClassOf schema1:world_bank_document .
+
+schema1:Turkiye a rdfs:Class ;
+    rdfs:label "Turkiye"@en ;
+    rdfs:subClassOf schema1:country .
+
+schema1:authored a rdf:Property ;
+    rdfs:label "This author wrote this document." .
+
+schema1:authoredBy a rdf:Property ;
+    rdfs:label "This document was authored by this author." .
+
+schema1:countryOfOrigin a rdf:Property ;
+    rdfs:label "Country that this document is about." .
+
+schema1:identifier a rdf:Property ;
+    rdfs:label "Identifier" ;
+    rdfs:domain schema1:trustfund .
+
+schema1:isPartOf a rdf:Property ;
+    rdfs:label "This entity is a part of another entity" .
+
+schema1:wd_RUI a rdf:Property .
+
+<http://schema.org/author/Corsi,Anna> a schema1:authors ;
+    rdfs:label "Corsi,Anna"@en ;
+    schema1:authored <http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Land_management_infrastructure_for_green_and_sustainable
+____________development___P179217___Sequence_No_:_4> .
+
+<http://schema.org/author/Lafaete_Almeida_de_Oliveira> a schema1:authors ;
+    rdfs:label "Lafaete Almeida de Oliveira"@en ;
+    schema1:authored <http://schema.org/doc/Brazil___LATIN_AMERICA_AND
+____________CARIBBEAN__P167455__Ceara_Rural_Sustainable_Development_and
+____________Competitiveness_Phase_II___Procurement_Plan> .
+
+<http://schema.org/author/Lucas_Figueras> a schema1:authors ;
+    rdfs:label "Lucas Figueras"@en ;
+    schema1:authored <http://schema.org/doc/Argentina___LATIN_AMERICA_AND
+____________CARIBBEAN__P105680__Matanza_Riachuelo_Basin_Sustainable
+____________Development_Project___Procurement_Plan> .
+
+<http://schema.org/author/Maria_Salene_Maia_da_Silva> a schema1:authors ;
+    rdfs:label "Maria Salene Maia da Silva"@en ;
+    schema1:authored <http://schema.org/doc/Brazil___LATIN_AMERICA_AND
+____________CARIBBEAN__P167455__Ceara_Rural_Sustainable_Development_and
+____________Competitiveness_Phase_II___Procurement_Plan> .
+
+<http://schema.org/author/Noronha_Farinelli,Barbara_Cristina> a schema1:authors ;
+    rdfs:label "Noronha Farinelli,Barbara Cristina"@en ;
+    schema1:authored <http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Mato_Grosso_Sustainable_Development_of_Family_Farming__
+____________P175723___Sequence_No_:_2> .
+
+<http://schema.org/author/Siegmann,Katharina> a schema1:authors ;
+    rdfs:label "Siegmann,Katharina"@en ;
+    schema1:authored <http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Sustainable_Development_DPL___P500557___Sequence_No_:_1> .
+
+<http://schema.org/author/World_Bank> a schema1:authors ;
+    rdfs:label "World Bank"@en ;
+    schema1:authored <http://schema.org/doc/Honduras___First_Fiscal_and
+____________Climate_Transparency_and_Sustainability_Development_Policy_Financing> .
+
+<http://schema.org/author/zgen_alar> a schema1:authors ;
+    rdfs:label "zgen alar"@en ;
+    schema1:authored <http://schema.org/doc/Turkiye___EUROPE_AND_CENTRAL
+____________ASIA__P179217__Land_management_infrastructure_for_green_and
+____________sustainable_development___Procurement_Plan> .
+
+<http://schema.org/doc/Appraisal_Environmental_and
+____________Social_Review_Summary_(ESRS)___Haryana_Clean_Air_and
+____________Sustainable_Development_Program___P502491> a schema1:Environmental_and_Social_Review_Summary ;
+    rdfs:label """Appraisal Environmental and
+            Social Review Summary (ESRS) - Haryana Clean Air and
+            Sustainable Development Program - P502491"""@en ;
+    schema1:authoredBy <http://schema.org/author/Chichgar,Sharlene_Jehanbux> ;
+    schema1:countryOfOrigin schema1:India ;
+    schema1:isPartOf <http://schema.org/project/IN_Haryana_Clean_Air_And_Sustainable_Development_Program_P502491>,
+        <http://schema.org/trustfund/TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr> .
+
+<http://schema.org/doc/Argentina___LATIN_AMERICA_AND
+____________CARIBBEAN__P105680__Matanza_Riachuelo_Basin_Sustainable
+____________Development_Project___Procurement_Plan> a schema1:Procurement_Plan ;
+    rdfs:label """Argentina - LATIN AMERICA AND
+            CARIBBEAN- P105680- Matanza-Riachuelo Basin Sustainable
+            Development Project - Procurement Plan"""@en ;
+    schema1:authoredBy <http://schema.org/author/Lucas_Figueras> ;
+    schema1:countryOfOrigin schema1:Argentina ;
+    schema1:isPartOf <http://schema.org/project/AR_Matanza_Riachuelo_Basin_Sustainable_Development_Project____P105680>,
+        <http://schema.org/trustfund/TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin>,
+        <http://schema.org/trustfund/TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th>,
+        <http://schema.org/trustfund/TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires> .
+
+<http://schema.org/doc/Disclosable_Restructuring_Paper__
+____________Ceara_Rural_Sustainable_Development_and_Competitiveness
+____________Phase_II___P167455> a schema1:Project_Paper ;
+    rdfs:label """Disclosable Restructuring Paper -
+            Ceara Rural Sustainable Development and Competitiveness
+            Phase II - P167455"""@en ;
+    schema1:authoredBy <http://schema.org/author/Paviot,Marie_Caroline> ;
+    schema1:countryOfOrigin schema1:Brazil ;
+    schema1:isPartOf <http://schema.org/project/BR_Ceara_Rural_Sustainable_Development_And_Competitiveness_Phase_I____P167455> .
+
+<http://schema.org/doc/Disclosable_Restructuring_Paper__
+____________Matanza_Riachuelo_Basin_Sustainable_Development_Project___P105680> a schema1:Project_Paper ;
+    rdfs:label """Disclosable Restructuring Paper -
+            Matanza-Riachuelo Basin Sustainable Development Project - P105680"""@en ;
+    schema1:authoredBy <http://schema.org/author/Ramirez,Maria_Catalina> ;
+    schema1:countryOfOrigin schema1:Argentina ;
+    schema1:isPartOf <http://schema.org/project/AR_Matanza_Riachuelo_Basin_Sustainable_Development_Project____P105680>,
+        <http://schema.org/trustfund/TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin>,
+        <http://schema.org/trustfund/TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th>,
+        <http://schema.org/trustfund/TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires> .
+
+<http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Ceara_Rural_Sustainable_Development_and_Competitiveness
+____________Phase_II___P167455___Sequence_No_:_11> a schema1:Implementation_Status_and_Results_Report ;
+    rdfs:label """Disclosable Version of the ISR -
+            Ceara Rural Sustainable Development and Competitiveness
+            Phase II - P167455 - Sequence No : 11"""@en ;
+    schema1:authoredBy <http://schema.org/author/Paviot,Marie_Caroline> ;
+    schema1:countryOfOrigin schema1:Brazil ;
+    schema1:isPartOf <http://schema.org/project/BR_Ceara_Rural_Sustainable_Development_And_Competitiveness_Phase_I____P167455> .
+
+<http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Land_management_infrastructure_for_green_and_sustainable
+____________development___P179217___Sequence_No_:_4> a schema1:Implementation_Status_and_Results_Report ;
+    rdfs:label """Disclosable Version of the ISR -
+            Land management infrastructure for green and sustainable
+            development - P179217 - Sequence No : 4"""@en ;
+    schema1:authoredBy <http://schema.org/author/Corsi,Anna> ;
+    schema1:countryOfOrigin schema1:Turkiye ;
+    schema1:isPartOf <http://schema.org/project/TR_Land_Management_Infrastructure_For_Green_And_Sustainable_Develo____P179217>,
+        <http://schema.org/trustfund/TF0C4083_Leveraging_property_and_geospatial_data_for_disaster_and_climate_resili>,
+        <http://schema.org/trustfund/TF0C5286_T00fcrkiye:_Leveraging_National_Spatial_Data_Infrastructure_for_Smart_C>,
+        <http://schema.org/trustfund/TF0C6078_GSCP___C2___Turkiye:_Geospatial_informed_Smart_City_Strategies_for_Publ> .
+
+<http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Matanza_Riachuelo_Basin_Sustainable_Development_Project__
+____________P105680___Sequence_No_:_33> a schema1:Implementation_Status_and_Results_Report ;
+    rdfs:label """Disclosable Version of the ISR -
+            Matanza-Riachuelo Basin Sustainable Development Project -
+            P105680 - Sequence No : 33"""@en ;
+    schema1:authoredBy <http://schema.org/author/Ramirez,Maria_Catalina> ;
+    schema1:countryOfOrigin schema1:Argentina ;
+    schema1:isPartOf <http://schema.org/project/AR_Matanza_Riachuelo_Basin_Sustainable_Development_Project____P105680>,
+        <http://schema.org/trustfund/TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin>,
+        <http://schema.org/trustfund/TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th>,
+        <http://schema.org/trustfund/TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires> .
+
+<http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Mato_Grosso_Sustainable_Development_of_Family_Farming__
+____________P175723___Sequence_No_:_2> a schema1:Implementation_Status_and_Results_Report ;
+    rdfs:label """Disclosable Version of the ISR -
+            Mato Grosso Sustainable Development of Family Farming -
+            P175723 - Sequence No : 2"""@en ;
+    schema1:authoredBy <http://schema.org/author/Noronha_Farinelli,Barbara_Cristina> ;
+    schema1:countryOfOrigin schema1:Brazil ;
+    schema1:isPartOf <http://schema.org/project/BR_Mato_Grosso_Sustainable_Development_Of_Family_Farming____P175723>,
+        <http://schema.org/trustfund/TF0C5871_CH4D___Brazil___Methane_Action_in_Livestock_Practices> .
+
+<http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Sustainable_Development_DPL___P500557___Sequence_No_:_1> a schema1:Implementation_Status_and_Results_Report ;
+    rdfs:label """Disclosable Version of the ISR -
+            Sustainable Development DPL - P500557 - Sequence No : 1"""@en ;
+    schema1:authoredBy <http://schema.org/author/Siegmann,Katharina> ;
+    schema1:countryOfOrigin schema1:Dominican_Republic ;
+    schema1:isPartOf <http://schema.org/project/DO_Sustainable_Development_Dpl____P500557>,
+        <http://schema.org/trustfund/TF0C5780_Technical_Assistance_for_Establishing_Science_Based_Policy_Options_for>,
+        <http://schema.org/trustfund/TF0C5873_Investing_in_the_Dominican_Republics_Green_Recovery_and_Blue_Economy> .
+
+<http://schema.org/doc/Environmental_and_Social
+____________Commitment_Plan_(ESCP)___Haryana_Clean_Air_and_Sustainable
+____________Development_Program___P502491> a schema1:Environmental_and_Social_Commitment_Plan ;
+    rdfs:label """Environmental and Social
+            Commitment Plan (ESCP) - Haryana Clean Air and Sustainable
+            Development Program - P502491"""@en ;
+    schema1:authoredBy <http://schema.org/author/Borrowing_Agency> ;
+    schema1:countryOfOrigin schema1:India ;
+    schema1:isPartOf <http://schema.org/project/IN_Haryana_Clean_Air_And_Sustainable_Development_Program_P502491>,
+        <http://schema.org/trustfund/TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr> .
+
+<http://schema.org/doc/Honduras___First_Fiscal_and
+____________Climate_Transparency_and_Sustainability_Development_Policy_Financing> a schema1:Program_Document ;
+    rdfs:label """Honduras - First Fiscal and
+            Climate Transparency and Sustainability Development Policy Financing"""@en ;
+    schema1:authoredBy <http://schema.org/author/World_Bank> ;
+    schema1:countryOfOrigin schema1:Honduras ;
+    schema1:isPartOf <http://schema.org/project/HN_First_Fiscal_And_Climate_Transparency_And_Sustainability_Develo____P179909> .
+
+<http://schema.org/doc/P502491___Draft_Environmental_and
+____________Social_Systems_Assessment_(ESSA)___Haryana_Clean_Air_and
+____________Sustainable_Development_Program> a schema1:Program_for_Results_Environmental_and_Social_Systems_Assessment ;
+    rdfs:label """P502491 - Draft Environmental and
+            Social Systems Assessment (ESSA) - Haryana Clean Air and
+            Sustainable Development Program"""@en ;
+    schema1:authoredBy <http://schema.org/author/Chichgar,Sharlene_Jehanbux> ;
+    schema1:countryOfOrigin schema1:India ;
+    schema1:isPartOf <http://schema.org/project/IN_Haryana_Clean_Air_And_Sustainable_Development_Program_P502491>,
+        <http://schema.org/trustfund/TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr> .
+
+<http://schema.org/doc/Stakeholder_Engagement_Plan_(SEP)
+______________Haryana_Clean_Air_and_Sustainable_Development_Program___P502491> a schema1:Stakeholder_Engagement_Plan ;
+    rdfs:label """Stakeholder Engagement Plan (SEP)
+            - Haryana Clean Air and Sustainable Development Program - P502491"""@en ;
+    schema1:authoredBy <http://schema.org/author/Borrowing_Agency> ;
+    schema1:countryOfOrigin schema1:India ;
+    schema1:isPartOf <http://schema.org/project/IN_Haryana_Clean_Air_And_Sustainable_Development_Program_P502491>,
+        <http://schema.org/trustfund/TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr> .
+
+<http://schema.org/doc/Turkiye___EUROPE_AND_CENTRAL
+____________ASIA__P179217__Land_management_infrastructure_for_green_and
+____________sustainable_development___Procurement_Plan> a schema1:Procurement_Plan ;
+    rdfs:label """Turkiye - EUROPE AND CENTRAL
+            ASIA- P179217- Land management infrastructure for green and
+            sustainable development - Procurement Plan"""@en ;
+    schema1:authoredBy <http://schema.org/author/zgen_alar> ;
+    schema1:countryOfOrigin schema1:Turkiye ;
+    schema1:isPartOf <http://schema.org/project/TR_Land_Management_Infrastructure_For_Green_And_Sustainable_Develo____P179217>,
+        <http://schema.org/trustfund/TF0C4083_Leveraging_property_and_geospatial_data_for_disaster_and_climate_resili>,
+        <http://schema.org/trustfund/TF0C5286_T00fcrkiye:_Leveraging_National_Spatial_Data_Infrastructure_for_Smart_C>,
+        <http://schema.org/trustfund/TF0C6078_GSCP___C2___Turkiye:_Geospatial_informed_Smart_City_Strategies_for_Publ> .
+
+<http://schema.org/project/BR_Mato_Grosso_Sustainable_Development_Of_Family_Farming____P175723> a schema1:project ;
+    rdfs:label "BR_Mato_Grosso_Sustainable_Development_Of_Family_Farming____P175723"@en .
+
+<http://schema.org/project/DO_Sustainable_Development_Dpl____P500557> a schema1:project ;
+    rdfs:label "DO_Sustainable_Development_Dpl____P500557"@en .
+
+<http://schema.org/project/HN_First_Fiscal_And_Climate_Transparency_And_Sustainability_Develo____P179909> a schema1:project ;
+    rdfs:label "HN_First_Fiscal_And_Climate_Transparency_And_Sustainability_Develo____P179909"@en .
+
+<http://schema.org/trustfund/TF0C5780_Technical_Assistance_for_Establishing_Science_Based_Policy_Options_for> a schema1:trustfund ;
+    rdfs:label "TF0C5780_Technical_Assistance_for_Establishing_Science_Based_Policy_Options_for",
+        "Trustfund: TF0C5780_Technical_Assistance_for_Establishing_Science_Based_Policy_Options_for" ;
+    schema1:countryOfOrigin schema1:Dominican_Republic ;
+    schema1:identifier <http://schema.org/trustfund/id/2458413> .
+
+<http://schema.org/trustfund/TF0C5871_CH4D___Brazil___Methane_Action_in_Livestock_Practices> a schema1:trustfund ;
+    rdfs:label "TF0C5871_CH4D___Brazil___Methane_Action_in_Livestock_Practices",
+        "Trustfund: TF0C5871_CH4D___Brazil___Methane_Action_in_Livestock_Practices" ;
+    schema1:countryOfOrigin schema1:Brazil ;
+    schema1:identifier <http://schema.org/trustfund/id/2458503> .
+
+<http://schema.org/trustfund/TF0C5873_Investing_in_the_Dominican_Republics_Green_Recovery_and_Blue_Economy> a schema1:trustfund ;
+    rdfs:label "TF0C5873_Investing_in_the_Dominican_Republics_Green_Recovery_and_Blue_Economy",
+        "Trustfund: TF0C5873_Investing_in_the_Dominican_Republics_Green_Recovery_and_Blue_Economy" ;
+    schema1:countryOfOrigin schema1:Dominican_Republic ;
+    schema1:identifier <http://schema.org/trustfund/id/2458505> .
+
+<http://schema.org/trustfund/id/1136287> rdfs:label "world bank trustfund ID for TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin"@en .
+
+<http://schema.org/trustfund/id/2169235> rdfs:label "world bank trustfund ID for TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th"@en .
+
+<http://schema.org/trustfund/id/2230395> rdfs:label "world bank trustfund ID for TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires"@en .
+
+<http://schema.org/trustfund/id/2396084> rdfs:label "world bank trustfund ID for TF0C4083_Leveraging_property_and_geospatial_data_for_disaster_and_climate_resili"@en .
+
+<http://schema.org/trustfund/id/2416574> rdfs:label "world bank trustfund ID for TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr"@en .
+
+<http://schema.org/trustfund/id/2442455> rdfs:label "world bank trustfund ID for TF0C5286_T00fcrkiye:_Leveraging_National_Spatial_Data_Infrastructure_for_Smart_C"@en .
+
+<http://schema.org/trustfund/id/2458413> rdfs:label "world bank trustfund ID for TF0C5780_Technical_Assistance_for_Establishing_Science_Based_Policy_Options_for"@en .
+
+<http://schema.org/trustfund/id/2458503> rdfs:label "world bank trustfund ID for TF0C5871_CH4D___Brazil___Methane_Action_in_Livestock_Practices"@en .
+
+<http://schema.org/trustfund/id/2458505> rdfs:label "world bank trustfund ID for TF0C5873_Investing_in_the_Dominican_Republics_Green_Recovery_and_Blue_Economy"@en .
+
+<http://schema.org/trustfund/id/2463445> rdfs:label "world bank trustfund ID for TF0C6078_GSCP___C2___Turkiye:_Geospatial_informed_Smart_City_Strategies_for_Publ"@en .
+
+<http://www.wikidata.org/entity/Q155> rdfs:label "Brazil wikidata code"@en .
+
+<http://www.wikidata.org/entity/Q414> rdfs:label "Argentina wikidata code"@en .
+
+<http://www.wikidata.org/entity/Q668> rdfs:label "India wikidata code"@en .
+
+<http://www.wikidata.org/entity/Q783> rdfs:label "Honduras wikidata code"@en .
+
+<http://schema.org/author/Borrowing_Agency> a schema1:authors ;
+    rdfs:label "Borrowing Agency"@en ;
+    schema1:authored <http://schema.org/doc/Environmental_and_Social
+____________Commitment_Plan_(ESCP)___Haryana_Clean_Air_and_Sustainable
+____________Development_Program___P502491>,
+        <http://schema.org/doc/Stakeholder_Engagement_Plan_(SEP)
+______________Haryana_Clean_Air_and_Sustainable_Development_Program___P502491> .
+
+<http://schema.org/author/Chichgar,Sharlene_Jehanbux> a schema1:authors ;
+    rdfs:label "Chichgar,Sharlene Jehanbux"@en ;
+    schema1:authored <http://schema.org/doc/Appraisal_Environmental_and
+____________Social_Review_Summary_(ESRS)___Haryana_Clean_Air_and
+____________Sustainable_Development_Program___P502491>,
+        <http://schema.org/doc/P502491___Draft_Environmental_and
+____________Social_Systems_Assessment_(ESSA)___Haryana_Clean_Air_and
+____________Sustainable_Development_Program> .
+
+<http://schema.org/author/Paviot,Marie_Caroline> a schema1:authors ;
+    rdfs:label "Paviot,Marie Caroline"@en ;
+    schema1:authored <http://schema.org/doc/Disclosable_Restructuring_Paper__
+____________Ceara_Rural_Sustainable_Development_and_Competitiveness
+____________Phase_II___P167455>,
+        <http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Ceara_Rural_Sustainable_Development_and_Competitiveness
+____________Phase_II___P167455___Sequence_No_:_11> .
+
+<http://schema.org/author/Ramirez,Maria_Catalina> a schema1:authors ;
+    rdfs:label "Ramirez,Maria Catalina"@en ;
+    schema1:authored <http://schema.org/doc/Disclosable_Restructuring_Paper__
+____________Matanza_Riachuelo_Basin_Sustainable_Development_Project___P105680>,
+        <http://schema.org/doc/Disclosable_Version_of_the_ISR__
+____________Matanza_Riachuelo_Basin_Sustainable_Development_Project__
+____________P105680___Sequence_No_:_33> .
+
+<http://schema.org/doc/Brazil___LATIN_AMERICA_AND
+____________CARIBBEAN__P167455__Ceara_Rural_Sustainable_Development_and
+____________Competitiveness_Phase_II___Procurement_Plan> a schema1:Procurement_Plan ;
+    rdfs:label """Brazil - LATIN AMERICA AND
+            CARIBBEAN- P167455- Ceara Rural Sustainable Development and
+            Competitiveness Phase II - Procurement Plan"""@en ;
+    schema1:authoredBy <http://schema.org/author/Lafaete_Almeida_de_Oliveira>,
+        <http://schema.org/author/Maria_Salene_Maia_da_Silva> ;
+    schema1:countryOfOrigin schema1:Brazil ;
+    schema1:isPartOf <http://schema.org/project/BR_Ceara_Rural_Sustainable_Development_And_Competitiveness_Phase_I____P167455> .
+
+<http://schema.org/project/TR_Land_Management_Infrastructure_For_Green_And_Sustainable_Develo____P179217> a schema1:project ;
+    rdfs:label "TR_Land_Management_Infrastructure_For_Green_And_Sustainable_Develo____P179217"@en .
+
+<http://schema.org/trustfund/TF0C4083_Leveraging_property_and_geospatial_data_for_disaster_and_climate_resili> a schema1:trustfund ;
+    rdfs:label "TF0C4083_Leveraging_property_and_geospatial_data_for_disaster_and_climate_resili",
+        "Trustfund: TF0C4083_Leveraging_property_and_geospatial_data_for_disaster_and_climate_resili" ;
+    schema1:countryOfOrigin schema1:Turkiye ;
+    schema1:identifier <http://schema.org/trustfund/id/2396084> .
+
+<http://schema.org/trustfund/TF0C5286_T00fcrkiye:_Leveraging_National_Spatial_Data_Infrastructure_for_Smart_C> a schema1:trustfund ;
+    rdfs:label "TF0C5286_T00fcrkiye:_Leveraging_National_Spatial_Data_Infrastructure_for_Smart_C",
+        "Trustfund: TF0C5286_T00fcrkiye:_Leveraging_National_Spatial_Data_Infrastructure_for_Smart_C" ;
+    schema1:countryOfOrigin schema1:Turkiye ;
+    schema1:identifier <http://schema.org/trustfund/id/2442455> .
+
+<http://schema.org/trustfund/TF0C6078_GSCP___C2___Turkiye:_Geospatial_informed_Smart_City_Strategies_for_Publ> a schema1:trustfund ;
+    rdfs:label "TF0C6078_GSCP___C2___Turkiye:_Geospatial_informed_Smart_City_Strategies_for_Publ",
+        "Trustfund: TF0C6078_GSCP___C2___Turkiye:_Geospatial_informed_Smart_City_Strategies_for_Publ" ;
+    schema1:countryOfOrigin schema1:Turkiye ;
+    schema1:identifier <http://schema.org/trustfund/id/2463445> .
+
+<http://schema.org/project/AR_Matanza_Riachuelo_Basin_Sustainable_Development_Project____P105680> a schema1:project ;
+    rdfs:label "AR_Matanza_Riachuelo_Basin_Sustainable_Development_Project____P105680"@en .
+
+<http://schema.org/project/BR_Ceara_Rural_Sustainable_Development_And_Competitiveness_Phase_I____P167455> a schema1:project ;
+    rdfs:label "BR_Ceara_Rural_Sustainable_Development_And_Competitiveness_Phase_I____P167455"@en .
+
+<http://schema.org/trustfund/TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin> a schema1:trustfund ;
+    rdfs:label "TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin",
+        "Trustfund: TF098374_Supporting_the_Implementation_of_Phase_1_of_the_Matanza_Riachuelo_Basin" ;
+    schema1:countryOfOrigin schema1:Argentina ;
+    schema1:identifier <http://schema.org/trustfund/id/1136287> .
+
+<http://schema.org/trustfund/TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th> a schema1:trustfund ;
+    rdfs:label "TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th",
+        "Trustfund: TF0B8604_Circular_Economy_Actions_for_Non_Point_Source_Pollution_Reduction_at_th" ;
+    schema1:countryOfOrigin schema1:Argentina ;
+    schema1:identifier <http://schema.org/trustfund/id/2169235> .
+
+<http://schema.org/trustfund/TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires> a schema1:trustfund ;
+    rdfs:label "TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires",
+        "Trustfund: TF0B9831_Circular_Economy_for_Waste_Management_in_Province_of_Buenos_Aires" ;
+    schema1:countryOfOrigin schema1:Argentina ;
+    schema1:identifier <http://schema.org/trustfund/id/2230395> .
+
+<http://schema.org/project/IN_Haryana_Clean_Air_And_Sustainable_Development_Program_P502491> a schema1:project ;
+    rdfs:label "IN_Haryana_Clean_Air_And_Sustainable_Development_Program_P502491"@en .
+
+<http://schema.org/trustfund/TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr> a schema1:trustfund ;
+    rdfs:label "TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr",
+        "Trustfund: TF0C4697_Haryana_Clean_Air_Project_for_Sustainable_Development:_Clean_Cooking_Pr" ;
+    schema1:countryOfOrigin schema1:India ;
+    schema1:identifier <http://schema.org/trustfund/id/2416574> .
+
+schema1:country rdfs:label "country"@en .
+
+schema1:project rdfs:label "worldbank project" .
+
+schema1:world_bank_document rdfs:label "A document produced and written by the World Bank."@en .
+
+schema1:trustfund rdfs:label "trustfund" .
+
+schema1:authors rdfs:label "worldbank authors" .
+
