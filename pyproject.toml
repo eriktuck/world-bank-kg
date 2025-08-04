@@ -1,18 +1,14 @@
 [project]
 name = "world-bank-kg"
 version = "0.1.0"
-description = "Add your description here"
+description = "Knowledge graph pipeline with spaCy, scispaCy, and coreference resolution"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
-    "ipykernel>=6.30.0",
-    "matplotlib>=3.10.3",
-    "networkx>=3.5",
-    "pandas>=2.3.1",
-    "pydot>=4.0.1",
-    "rdflib>=7.1.4",
-    "requests>=2.32.4",
-    "sparqlwrapper>=2.0.0",
-    "tqdm>=4.67.1",
-    "unidecode>=1.4.0",
+  "spacy==3.6.1",
+  "scispacy==0.5.5",
+  "en-core-sci-sm @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz",
+  "coreferee==1.4.1",
+  "coreferee-en==1.4.1",
+  "ipykernel>=6.30.0"
 ]
