@@ -1,26 +1,46 @@
 # Specifications
 
-
+Domain-specific LM.
 
 [World Bank API](https://documents.worldbank.org/en/publication/documents-reports/api)
 
-Consider creating a very simple RAG workflow with PDFs as a baseline to compare any advancements
+In the course of this project the author has explored a variety of available implementations and frameworks for individual pipeline components. A review of options and justification for choices made in this pipeline can be found in Appendix A. Ultimately, the purpose of this project is to explore the ability of a GraphRAG-style solution to surface synthesized findings from a domain-specific corpus.
 
-Develop test questions and answers to evaluate performance for single doc
-
-[Semantic Technology](https://en.wikipedia.org/wiki/Semantic_technology)
-
-[Knowledge Representation & Reasoning](https://en.wikipedia.org/wiki/Knowledge_representation_and_reasoning)
-
-## Tech
+## Considerations
 
 ### High-level frameworks
 
 For a graph-RAG application, both LlamaIndex and LangChain/LangGraph are suitable options. LlamaIndex is more straightforward for simple RAG apps, while LangGraph provides more control. A robust app might use both.
 
+### LLM integrations
 
+A KG can be built entirely by prompting. see this [demo](https://medium.com/@john011334/transforming-unstructured-text-into-interactive-knowledge-graphs-with-large-language-models-82f5060ebd8c). Compare LLM prompt method with traditional NLP methods at each step. "Murder your (pipeline) darlings".
 
+### Linked Data
 
+Can use RDF to create formal links between nodes (with `instanceOf` QID) and relationships (with SKOS). Or not. What is the advantage/disadvantage?
+
+### Cost
+
+Understanding cost at each step in the pipeline will be important before running the model on a large corpus.
+
+## Practices
+
+Create an evaluation baseline first
+
+- Develop test questions and answers to evaluate performance for small cluster of docs (one geography or project or funder)
+
+Create an LLM powered alternative also that can be used for comparison. Consider cost and accuracy.
+
+Visualize whenever possible (embedding space, lexical graph, property graph)
+
+It’s often best to not overwrite original text, but to keep a resolved version in parallel (e.g. for KG construction or QA).
+
+To organize new pipeline components and Q&A solutions, it can be useful to think of the set of problems each pipeline component is trying to solve. Rather than build a modular pipeline with swappable components, select a combination of frameworks that address all relevant problems. 
+
+- For example, in RAG the retrieval unit is typically the "chunk". Problems can arise if the chunk is not contextualized and self-contained (e.g., an acronym without its definition or a coreference without the proper noun). This is typically addressed by pipeline components for abbreviation resolution, coreference resolution, and named entity recognition. A further step is entity resolution and named entity linking to a KB like wikipedia.
+- Proposition-based retrieval units solve this at inference time, and should resolve both coreferences and acronyms. (Chen et al 2024). NEL can be done as a downstream task on the propositions. 
+- In contrast, we can rely on graph embeddings to cluster the coreferences and the acronyms together with other instances of the same entity (Edge et al 2024) so we don't need to resolve entity references for inference. NEL could be tacked on by resolving one or more  entities in the embedded space, but it 
 
 ## Project Epics
 
@@ -75,7 +95,11 @@ Do this first.
 
 #### Co-references
 
-Reference resolution (He > Greg) [paper](https://arxiv.org/pdf/2312.06648.pdf).
+Co-references need not necessarily be resolved if the graph is embedded as similar entities will be embedded near each other (Edge 2024). 
+
+However, some use cases might suffer, especially those that  
+
+[Proposition retriever](https://arxiv.org/pdf/2312.06648.pdf) showed promising improvements over sentence level or passage level retrieval in Q&A tasks by resolving text into discrete propositions (statements of facts), which is a method of co-reference resolution. although the authors did not propose this, the approach is especially suitable for representation in a knowledge graph as each proposition could be modeled as a SPO triple. The *Propositionizer* model is available on HuggingFace [https://huggingface.co/chentong00/propositionizer-wiki-flan-t5-large](https://huggingface.co/chentong00/propositionizer-wiki-flan-t5-large). 
 
 Both [SpanBERT](https://arxiv.org/abs/1907.10529) and AllenNLP offer valuable tools for coreference resolution, with SpanBERT being more specialized for longer documents while AllenNLP provides a robust framework for various NLP tasks. 
 
@@ -83,7 +107,7 @@ neuralcoref is depricated. tried coreferee, ok. spacy has an option in experimen
 
 This is dependency hell, can't do acronyms and coreferences in same library.
 
-It’s often best to not overwrite original text, but to keep a resolved version in parallel (e.g. for KG construction or QA).
+
 
 #### Chunking
 
@@ -97,6 +121,8 @@ For transformer-based pipelines, we first need to chunk the document to limit th
 
 ## Extract keywords to use in NER
 
+Named entities exhibit long-tail behavior (most entities have very few occurences in the corpus) (Cheng 2024). Proposition retriever improves performance for low-frequency entities.
+
 ### Controlled vocabulary
 
 - [SDG Taxonomy](http://metadata.un.org/sdg)
@@ -108,6 +134,12 @@ For transformer-based pipelines, we first need to chunk the document to limit th
 
 - [LinkedSDGs API](https://linkedsdg.officialstatistics.org/#/api) (see [LOD4Stats repo](https://github.com/UNStats/LOD4Stats) for implemented SDG Turtle files)
 
+### Corpus-specific vocabulary
+
+While a controlled vocabulary could be developed by hand, algorithms like TextRank and [RAKE](https://github.com/aneesha/RAKE) and [YAKE!](https://github.com/LIAAD/yake) are commonly used to extract keywords. With transformers, we have available models like [KeyBERT](https://github.com/MaartenGr/KeyBERT).
+
+However, frontier language models like GPT-4 can likely do even better than these specialized models when prompted. 
+
 ### Triple extraction
 
 Use spacy to extract triples (subject, predicate, object) for document-specific knowledge graph
@@ -116,11 +148,11 @@ Use spacy to extract triples (subject, predicate, object) for document-specific 
 
 Now that we have text in Markdown, we can begin the keyword extraction process. Keywords augment named entities from NLP pipelines with domain-specific concepts (e.g., environmental crime for the international development sector).
 
-While a controlled vocabulary could be developed by hand, algorithms like TextRank and [RAKE](https://github.com/aneesha/RAKE) and [YAKE!](https://github.com/LIAAD/yake) are commonly used to extract keywords. With transformers, we have available models like [KeyBERT](https://github.com/MaartenGr/KeyBERT).
-
-However, frontier language models like GPT-4 can likely do even better than these specialized models when prompted. 
 
 
+### Predicates
+
+How does using SKOS help or hurt our use case for predicates? Is there another controlled vocabulary that has predicates?
 
 
 
