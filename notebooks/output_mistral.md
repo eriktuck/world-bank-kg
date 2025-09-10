@@ -515,9 +515,9 @@ The government of Mexico (GoM) publishes annually through SENER a ten-year plan 
 | Introduction of Climate Friendly <br> Measures in Transport | P059161 | Global <br> Environment <br> Facility- Grant | Mexico | Active | $29-$ Oct-2002 |
 | Waste Management and Carbon <br> Offset Project | P088546 | Carbon Offset | Mexico | Lending | $18-$ Mar-2005 |
 
-The United Nations Development Program is implementing since 2002 a US $\$ 10 \mathrm{~m}$ GEF project aiming to promote commercial markets for wind energy in Mexico (project title: Action Plan for Removing Barriers to the Full-Scale Implementation of Wind Power in Mexico).
+The United Nations Development Program is implementing since 2002 a US\$10m GEF project aiming to promote commercial markets for wind energy in Mexico (project title: Action Plan for Removing Barriers to the Full-Scale Implementation of Wind Power in Mexico).
 
-The World Bank is also expected to approve in 2006 another US $\$ 25 \mathrm{~m}$ GEF project aiming to promote large scale renewable energy in Mexico.
+The World Bank is also expected to approve in 2006 another US\$25m GEF project aiming to promote large scale renewable energy in Mexico.
 
 ---
 
@@ -1186,7 +1186,7 @@ Estimated Approval and Supervision costs:
 |  (US$ millions) | 1984 | 1994 | 2003 | 2004  |
 |  Total exports (tob) | 29,100 | 60,862 | 104,923 | 169,159  |
 |  Oil | 16,601 | 7,448 | 18,664 | 23,706  |
-|  Agriculture | 1,481 | 2,878 | 4,864 | 8,421  |
+|  Agriculture | 1,481 | 2,878 | 4,864 | 5,421  |
 |  Manufactures | 10,499 | 50,402 | 141,087 | 159,093  |
 |  Total imports (cif) | 15,916 | 78,346 | 170,846 | 197,247  |
 |  Food |  |  |  |   |
@@ -1206,7 +1206,7 @@ Estimated Approval and Supervision costs:
 |  Financing items (net) | -2,034 | 12,463 | 18,437 | 11,416  |
 |  Changes in net reserves | -2,149 | 17,199 | -9,833 | -4,061  |
 |  Memp |  |  |  |   |
-|  Reserves including gold (US$ millions) | 7,355 | 6,300 | 59,027 | 64,204  |
+|  Reserves including gold (US$ millions) | 7,355 | 6,300 | 59,027 | 54,204  |
 |  Conversion rate (DEC, local/US$) | 0.2 | 3.4 | 10.8 | 11.3  |
 |  EXTERNAL DEBT and RESOURCE FLOWS |  |  |  |   |
 |  (US$ millions) | 1984 | 1994 | 2003 | 2004  |
@@ -1224,8 +1224,8 @@ Estimated Approval and Supervision costs:
 |  Portfolio equity (net inflows) | 0 | 4,084 |  |   |
 |  World Bank program |  |  |  |   |
 |  Commitments | 578 | 2,380 | 868 | 621  |
-|  Disbursements | 682 | 942 | 1,268 | 767  |
-|  Principal repayments | 263 | 1,569 | 1,359 | 1,876  |
+|  Disbursements | 682 | 542 | 1,258 | 757  |
+|  Principal repayments | 263 | 1,568 | 1,359 | 1,876  |
 |  Net flows | 430 | -123 | -101 | -1,209  |
 |  Interest payments | 233 | 624 | 613 | 524  |
 |  Net transfers | 197 | -1,046 | -714 | -1,733  |
