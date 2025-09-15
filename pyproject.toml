@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "chromadb>=1.0.20",
     "docling>=2.48.0",
     "en-core-web-sm",
     "ipykernel>=6.30.1",
@@ -13,6 +14,7 @@ dependencies = [
     "langchain-openai>=0.3.32",
     "langchain-unstructured>=0.1.6",
     "llama-index>=0.12.52",
+    "llama-index-vector-stores-chroma>=0.4.2",
     "matplotlib>=3.10.5",
     "mineru[core]>=2.1.11",
     "mistralai>=1.9.9",
