@@ -1,14 +1,28 @@
-# Python-generated files
+# ---- ChromaDB ----
+# Ignore persistent vector store
+chroma_db/
+*.chroma
+
+# ---- MinerU Outputs ----
+output/
+*.json
+
+# ---- Python / Virtualenv ----
 __pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-env-coref
-
-# Secrets
+*.pyc
+*.pyo
+*.pyd
+.venv/
 .env
+.env.*
+secrets/
+
+# ---- Jupyter / IPython ----
+.ipynb_checkpoints/
+*.ipynb~
+
+# ---- Logs / Temp ----
+*.log
+*.tmp
+*.swp
+.DS_Store
