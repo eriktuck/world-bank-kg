@@ -7,7 +7,9 @@ import chromadb
 from dotenv import load_dotenv
 load_dotenv(dotenv_path="secrets/.env")
 
-file_path = Path('output/test/auto/test.md')
+from models import CustomParser
+
+file_path = Path('output/test/auto/test_content_list.json')
 
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
@@ -21,13 +23,13 @@ vector_store = ChromaVectorStore(chroma_collection=collection)
 storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
 with open(file_path, "r") as f:
-    md_string = f.read()
+    struct_out = f.read()
 
 doc = Document(
-    text=md_string,
+    text=struct_out,
     metadata={"source": str(file_path)})
 
-parser = MarkdownElementNodeParser(
+parser = CustomParser(
     include_metadata=True, 
     include_prev_next_rel=True
 )
