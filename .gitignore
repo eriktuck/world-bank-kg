@@ -2,6 +2,7 @@
 # Ignore persistent vector store
 chroma_db/
 *.chroma
+storage/
 
 # ---- MinerU Outputs ----
 output/

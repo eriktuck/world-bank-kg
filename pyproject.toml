@@ -23,6 +23,7 @@ dependencies = [
     "pdfplumber>=0.11.7",
     "pydot>=4.0.1",
     "pymupdf>=1.26.4",
+    "pytest>=8.4.2",
     "python-dotenv>=1.1.1",
     "rdflib>=7.1.4",
     "requests>=2.32.5",
