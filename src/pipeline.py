@@ -15,7 +15,7 @@ from src.storage import STORAGE_DIR
 EXCLUDED_ENTS = ['DATE', 'TIME', 'PERCENT',
                 'MONEY', 'QUANTITY', 'ORDINAL',
                 'CARDINAL', 'PERSON']
-DOC_ID = "06af11ed-1bed-451e-8e0d-1aded1bbecea"
+DOC_ID = "237200cd-911a-40bf-b84b-2b5e94afeb2b"
 
 
 LOG_DIR = Path("./logs")
@@ -55,7 +55,7 @@ class KnowledgeGraphPipeline:
         logger.info(f"Acronyms found {acronyms}")
 
         raw_entities = self.entity_extractor.extract(doc.text)
-        logger.info(f"Raw entities: {[(ent[0], ent[1]) for ent in raw_entities if ent[1] not in EXCLUDED_ENTS]}")
+        # logger.info(f"Raw entities: {[(ent[0], ent[1]) for ent in raw_entities if ent[1] not in EXCLUDED_ENTS]}")
 
         return {
             "doc_id": doc.doc_id,
