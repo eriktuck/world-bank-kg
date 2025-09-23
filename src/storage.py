@@ -4,7 +4,7 @@ from pathlib import Path
 
 import chromadb
 from dotenv import load_dotenv
-from llama_index.core import Document, StorageContext, VectorStoreIndex
+from llama_index.core import Document, StorageContext, VectorStoreIndex, load_index_from_storage
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
@@ -71,6 +71,21 @@ def add_file(file_path: str, reset: bool = False):
 
     action = "Rebuilt index" if reset else "Added"
     logger.info(f"{action} with {n_nodes} nodes from {file_path}.")
+
+
+def load_index() -> VectorStoreIndex:
+    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
+    
+    vector_store = ChromaVectorStore(chroma_collection=collection)
+    storage_context = StorageContext.from_defaults(
+        persist_dir=str(STORAGE_DIR),
+        vector_store=vector_store
+    )
+    
+    index = load_index_from_storage(storage_context)
+    
+    return index
 
 
 def main():
