@@ -52,15 +52,14 @@ class KnowledgeGraphPipeline:
     def process_document(self, doc) -> Dict[str, Any]:
         logger.info("Extracting acronyms...")
         acronyms = self.acronym_extractor.extract(doc.text)
-        logger.info(f"Acronyms found {acronyms}")
 
-        raw_entities = self.entity_extractor.extract(doc.text)
-        # logger.info(f"Raw entities: {[(ent[0], ent[1]) for ent in raw_entities if ent[1] not in EXCLUDED_ENTS]}")
+        logger.info("Extracting entities...")
+        raw_entities = self.entity_extractor.extract(doc.text, acronyms)
 
         return {
             "doc_id": doc.doc_id,
             "acronyms": acronyms,
-            "entities": raw_entities,
+            "entities": [(ent[0], ent[1]) for ent in raw_entities if ent[1] not in EXCLUDED_ENTS],
         }
 
 ### -------------------------------------------------------------------------
