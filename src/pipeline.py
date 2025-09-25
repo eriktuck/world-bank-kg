@@ -4,12 +4,14 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple
 
 import spacy
+from spacy.pipeline import EntityRuler
 from llama_index.core import Document, StorageContext, load_index_from_storage
 from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 
 from src.acronyms import AcronymExtractor
 from src.ner import EntityExtractor
+from src.linker import Wikifier 
 from src.storage import STORAGE_DIR
 
 EXCLUDED_ENTS = ['DATE', 'TIME', 'PERCENT',
@@ -45,16 +47,40 @@ def load_document_from_storage(storage_dir: str, doc_id: str):
 ### --------------------------------------------------------------------------
 
 class KnowledgeGraphPipeline:
-    def __init__(self):
+    def __init__(self, model: str = "en_core_web_sm"):
+        self.nlp = spacy.load(model)
         self.acronym_extractor = AcronymExtractor()
         self.entity_extractor = EntityExtractor()
+        self.entity_linker = Wikifier()
     
     def process_document(self, doc) -> Dict[str, Any]:
         logger.info("Extracting acronyms...")
-        acronyms = self.acronym_extractor.extract(doc.text)
+        self.acronym_extractor.extract(doc.text)
+        acronyms = self.acronym_extractor.acronyms
+        entities_from_acronyms = self.acronym_extractor.entities
 
         logger.info("Extracting entities...")
-        raw_entities = self.entity_extractor.extract(doc.text, acronyms)
+
+        ruler: EntityRuler = self.nlp.add_pipe("entity_ruler", before="ner")
+        acronym_patterns = [
+            {"label": "ACRONYM", "pattern": [{"LOWER": abbr.lower()}], "id": abbr}
+            for abbr in acronyms
+        ]
+
+        entity_patterns = [
+            {"label": "CUSTOM", "pattern": ent, "id": abbr}
+            for ent, abbr in entities_from_acronyms.items()
+        ]
+        ruler.add_patterns(acronym_patterns + entity_patterns)
+
+        # TODO: update storage to read
+        md_file_path = 'output/test/auto/test.md'
+        md_text = Path(md_file_path).read_text()
+
+        raw_entities = self.entity_extractor.extract(self.nlp, md_text)
+
+        logger.info("Linking entities...")
+
 
         return {
             "doc_id": doc.doc_id,
