@@ -12,7 +12,8 @@ from src.storage import load_index
 
 class AcronymExtractor:
     def __init__(self):
-        self.text = None
+        self.acronyms = None
+        self.entities = None
     
     def _get_acronym_section(self) -> Text:
         index = load_index()
@@ -65,6 +66,8 @@ class AcronymExtractor:
         inline_acronyms = {}
         for abrv in doc._.abbreviations:
             inline_acronyms[abrv.text] = abrv._.long_form.text
+
+        inline_acronyms = self.clean_acronyms(inline_acronyms)
         
         return inline_acronyms
     
@@ -92,6 +95,19 @@ class AcronymExtractor:
                 merged[abbr] = definition
 
         return merged
+    
+
+    def get_all_entities_from_acronyms(self, primary: dict, detected: dict) -> List:
+        # Flip primary
+        entities = {v: k for k, v in primary.items()}
+
+        # Flip detected and merge
+        for k, v in detected.items():
+            entities.setdefault(v, k)
+
+        self.entities = entities
+
+        return self.entities
     
 
     def clean_acronyms(self, acronym_dict: dict, min_upper_ratio: float = 0.5) -> dict:
@@ -127,12 +143,17 @@ class AcronymExtractor:
 
     
     def extract(self, text: str) -> Dict:
+        # extract and merge acronyms
         acronym_section = self._get_acronym_section()
         primary_acronyms = self._extract_acronyms_with_llm(acronym_section)
         secondary_acronyms = self._extract_inline_acronyms(text)
 
         merged_acronyms = self.merge_acronym_dicts(primary_acronyms, secondary_acronyms)
-        cleaned_acronyms = self.clean_acronyms(merged_acronyms)
 
-        return cleaned_acronyms
+        self.acronyms = merged_acronyms
+
+        # store entities
+        entities_from_acronyms = self.get_all_entities_from_acronyms(primary_acronyms, secondary_acronyms)
+        
+        return self.acronyms
 
