@@ -102,7 +102,13 @@ class CustomParser:
                         metadata["page_idx"] = ",".join(str(p) for p in pages)
                 # Use the headers that were active when this buffer was built
                 metadata["headers"] = " > ".join([h for _, h in (buffer_headers or header_stack)])
-                nodes.append(TextNode(text=combined_text, metadata=self._sanitize_metadata(metadata)))
+                nodes.append(
+                    TextNode(
+                        text=combined_text,
+                        ref_doc_id=doc.doc_id,
+                        metadata=self._sanitize_metadata(metadata),
+                    )
+                )
                 buffer, buffer_metadata, buffer_len, buffer_headers = [], [], 0, None
 
             for element in struct_out:
@@ -146,7 +152,13 @@ class CustomParser:
                                     if k not in {"type", "text"}:
                                         metadata[k] = v
                             metadata["headers"] = " > ".join([h for _, h in (buffer_headers or header_stack)])
-                            nodes.append(TextNode(text=chunk, metadata=self._sanitize_metadata(metadata)))
+                            nodes.append(
+                                TextNode(
+                                    text=chunk,
+                                    ref_doc_id=doc.doc_id,
+                                    metadata=self._sanitize_metadata(metadata),
+                                )
+                            )
                         continue
 
                     md = {}
@@ -178,7 +190,13 @@ class CustomParser:
                         if not text_value:
                             logger.warning("Skipping empty image element")
                             continue
-                    nodes.append(TextNode(text=text_value, metadata=self._sanitize_metadata(metadata)))
+                    nodes.append(
+                        TextNode(
+                            text=text_value,
+                            ref_doc_id=doc.doc_id,
+                            metadata=self._sanitize_metadata(metadata),
+                        )
+                    )
                     continue
 
                 # ---- Unknown element type ----
