@@ -8,6 +8,9 @@ storage/
 wikidata_cache.json
 *.ttl
 
+# --- Test Inputs ---
+pdfs/
+
 # ---- MinerU Outputs ----
 output/
 *.json
@@ -27,6 +30,7 @@ secrets/
 *.ipynb~
 
 # ---- Logs / Temp ----
+logs/
 *.log
 *.tmp
 *.swp
