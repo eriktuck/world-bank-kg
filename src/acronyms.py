@@ -1,20 +1,22 @@
 from typing import List, Tuple, Text, Dict
 import json
-from llama_index.core import Document
 from openai import OpenAI
-import spacy
-import scispacy
-from scispacy.abbreviation import AbbreviationDetector
-from pprint import pprint
 import html
+import logging
+
+from llama_index.core.vector_stores.types import MetadataFilters, ExactMatchFilter
 
 from src.storage import load_index
 
+logger = logging.getLogger(__name__)
+
 class AcronymExtractor:
-    def __init__(self):
+    def __init__(self, doc_id: str):
+        self.doc_id = doc_id
         self.acronyms = None
         self.entities = None
     
+
     def _get_acronym_section(self) -> Text:
         index = load_index()
 
@@ -22,15 +24,32 @@ class AcronymExtractor:
         Find sections of the document that define acronyms or abbreviations.
         These sections may be called 'Abbreviations', 'Acronyms', or 'List of Acronyms'.
         """
-        retriever = index.as_retriever(similarity_top_k=5)
+        retriever = index.as_retriever(
+            similarity_top_k=5,
+            filters=MetadataFilters(
+                filters=[ExactMatchFilter(key="ref_doc_id", value=str(self.doc_id))]
+            ),
+        )
 
         nodes = retriever.retrieve(query_str)
 
-        for node in nodes:
-            print(f"[Score: {node.score:.2f}] {node.node.text[:300]}...\n")
+        if not nodes:
+            logger.warning(f"No nodes retrieved for doc_id={self.doc_id}")
 
-        return "---\n\n".join([node.node.text for node in nodes])
+        results = []
+        for scored in nodes:
+            node = scored.node
+            logger.debug(
+                f"[Score: {scored.score:.2f}] "
+                f"ref_doc_id={getattr(node, 'ref_doc_id', None)} "
+                f"metadata={node.metadata} "
+                f"text={node.text[:200]}..."
+            )
+            results.append(node.text)
+
+        return "---\n\n".join(results)
     
+
     def _extract_acronyms_with_llm(self, text, client=None) -> Dict:
         if not client:
             client = OpenAI()
@@ -43,6 +62,8 @@ class AcronymExtractor:
         Text:
         """ + text
 
+        logger.debug(f"Prompt sent for acronyms \n\n {prompt}")
+
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -52,18 +73,19 @@ class AcronymExtractor:
             temperature=0,
         )
 
+        logger.debug(f'Model returns result {response}')
+
         declared_acronyms = json.loads(response.choices[0].message.content)
 
         return declared_acronyms
     
-    def _extract_inline_acronyms(self, text) -> Dict:
-        nlp = spacy.load("en_core_sci_sm")
-        nlp.add_pipe("abbreviation_detector")
 
-        doc = nlp(text)
-
-        # Extract abbreviations
+    def _extract_inline_acronyms(self, doc) -> Dict:
         inline_acronyms = {}
+        if not hasattr(doc._, "abbreviations"):
+            logger.warning("AbbreviationDetector not in pipeline; skipping acronym extraction.")
+            return inline_acronyms
+        
         for abrv in doc._.abbreviations:
             inline_acronyms[abrv.text] = abrv._.long_form.text
 
@@ -87,11 +109,11 @@ class AcronymExtractor:
         for abbr, definition in detected.items():
             if abbr in merged:
                 if merged[abbr] != definition:
-                    print(f"⚠️ Warning: Conflict for acronym '{abbr}':")
-                    print(f"    Primary:  {merged[abbr]}")
-                    print(f"    Detected: {definition}")
+                    logger.debug(f"⚠️ Warning: Conflict for acronym '{abbr}':")
+                    logger.debug(f"    Primary:  {merged[abbr]}")
+                    logger.debug(f"    Detected: {definition}")
             else:
-                print(f'➕ {abbr}: {definition}')
+                logger.debug(f'➕ {abbr}: {definition}')
                 merged[abbr] = definition
 
         return merged
@@ -105,9 +127,7 @@ class AcronymExtractor:
         for k, v in detected.items():
             entities.setdefault(v, k)
 
-        self.entities = entities
-
-        return self.entities
+        return entities
     
 
     def clean_acronyms(self, acronym_dict: dict, min_upper_ratio: float = 0.5) -> dict:
@@ -148,12 +168,11 @@ class AcronymExtractor:
         primary_acronyms = self._extract_acronyms_with_llm(acronym_section)
         secondary_acronyms = self._extract_inline_acronyms(text)
 
-        merged_acronyms = self.merge_acronym_dicts(primary_acronyms, secondary_acronyms)
+        # get and store acronyms
+        self.acronyms = self.merge_acronym_dicts(primary_acronyms, secondary_acronyms)
 
-        self.acronyms = merged_acronyms
-
-        # store entities
-        entities_from_acronyms = self.get_all_entities_from_acronyms(primary_acronyms, secondary_acronyms)
+        # get and store entities from acronyms
+        self.entities = self.get_all_entities_from_acronyms(primary_acronyms, secondary_acronyms)
         
         return self.acronyms
 
