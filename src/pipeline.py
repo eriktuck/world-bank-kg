@@ -1,82 +1,68 @@
-import json
 import logging
-from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import Dict, List, Any
 
 import spacy
-from llama_index.core import Document, StorageContext, load_index_from_storage
-from llama_index.vector_stores.chroma import ChromaVectorStore
-import chromadb
+from spacy.pipeline import EntityRuler
+from scispacy.abbreviation import AbbreviationDetector  # used to add "abbreviation_detector" in nlp pipeline
 
 from src.acronyms import AcronymExtractor
 from src.ner import EntityExtractor
-from src.storage import STORAGE_DIR
+from src.linker import Wikifier 
+from src.reader import Reader
 
-EXCLUDED_ENTS = ['DATE', 'TIME', 'PERCENT',
-                'MONEY', 'QUANTITY', 'ORDINAL',
-                'CARDINAL', 'PERSON']
-DOC_ID = "06af11ed-1bed-451e-8e0d-1aded1bbecea"
+logger = logging.getLogger(__name__)
 
 
-LOG_DIR = Path("./logs")
-LOG_DIR.mkdir(exist_ok=True)
-LOG_FILE = LOG_DIR / "pipeline.log"
+class DocumentPipeline:
+    def __init__(self, file_id: str, model: str = "en_core_web_sm"):
+        self.file_id = file_id
+        self.nlp = spacy.load(model)
+        
+        # Add abbreviation detector
+        if "abbreviation_detector" not in self.nlp.pipe_names:
+            self.nlp.add_pipe("abbreviation_detector", first=True)
 
-logger = logging.getLogger("pipeline")
-logger.setLevel(logging.INFO)
-
-# Avoid duplicate handlers if main() is called multiple times
-if not logger.handlers:
-    file_handler = logging.FileHandler(LOG_FILE, mode="w", encoding="utf-8")
-    file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
-
-    logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
-
-
-def load_document_from_storage(storage_dir: str, doc_id: str):
-    storage_context = StorageContext.from_defaults(persist_dir=storage_dir)
-    docstore = storage_context.docstore
-    return docstore.get_document(doc_id)
-
-### --------------------------------------------------------------------------
-
-class KnowledgeGraphPipeline:
-    def __init__(self):
-        self.acronym_extractor = AcronymExtractor()
+        # Add entity ruler (after NER)
+        if "entity_ruler" not in self.nlp.pipe_names:
+            self.entity_ruler = self.nlp.add_pipe("entity_ruler", before="ner")
+        else:
+            self.entity_ruler = self.nlp.get_pipe("entity_ruler")
+        
+        self.acronym_extractor = AcronymExtractor(file_id)
         self.entity_extractor = EntityExtractor()
-    
-    def process_document(self, doc) -> Dict[str, Any]:
-        logger.info("Extracting acronyms...")
-        acronyms = self.acronym_extractor.extract(doc.text)
-        logger.info(f"Acronyms found {acronyms}")
+        
+        self.reader = Reader()  # TODO: use ArtifactStore from storage.py instead
 
-        raw_entities = self.entity_extractor.extract(doc.text)
-        logger.info(f"Raw entities: {[(ent[0], ent[1]) for ent in raw_entities if ent[1] not in EXCLUDED_ENTS]}")
+
+    def process(self, md_text: str) -> Dict[str, Any]:
+        logger.info("Processing document...")
+        
+        doc = self.nlp(md_text)
+        
+        acronyms = self.acronym_extractor.extract(doc)
+        logger.info(f"Extracted {len(acronyms)} acronyms: {list(acronyms.keys())}")
+
+        self.entity_extractor.add_acronym_patterns(self.entity_ruler, acronyms)
+
+        doc = self.entity_extractor.apply_entity_ruler(self.entity_ruler, doc)
+
+        entities = self.entity_extractor.collect_entities(doc)
+        logger.info(f"Collected {len(entities)} total entities.")
+
+        wikifier = Wikifier()
+        linked_entities = wikifier.wikify(entities)
+
+        cleaned_entities = self.entity_extractor._normalize_entities(linked_entities)
+
+        return acronyms, cleaned_entities
+    
+
+    def run(self):
+        md_text = self.reader.get_markdown(self.file_id)
+        acronyms, entities = self.process(md_text)
 
         return {
-            "doc_id": doc.doc_id,
+            "doc_id": self.file_id,
             "acronyms": acronyms,
-            "entities": raw_entities,
+            "entities": entities,
         }
-
-### -------------------------------------------------------------------------
-
-def main():
-    pipeline = KnowledgeGraphPipeline()
-    text = load_document_from_storage(STORAGE_DIR, DOC_ID)
-    results = pipeline.process_document(text)
-
-    logger.info(f"Pipeline ran without errors. See logs at {LOG_FILE}")
-
-    # Save results separately as JSON file for inspection
-    results_file = LOG_DIR / "pipeline_results.json"
-    results_file.write_text(json.dumps(results, indent=2, ensure_ascii=False))
-    logger.info(f"Saved results to {results_file}")
-
-
-if __name__ == "__main__":
-    main()

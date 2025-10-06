@@ -4,6 +4,10 @@ chroma_db/
 *.chroma
 storage/
 
+# ---- Outputs ----
+wikidata_cache.json
+*.ttl
+
 # ---- MinerU Outputs ----
 output/
 *.json

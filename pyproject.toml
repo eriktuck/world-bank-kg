@@ -3,11 +3,12 @@ name = "world-bank-kg"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.11"
 dependencies = [
     "chromadb>=1.0.20",
     "docling>=2.48.0",
     "en-core-web-sm",
+    "en-core-sci-sm",
     "ipykernel>=6.30.1",
     "langchain>=0.3.27",
     "langchain-community>=0.3.29",
@@ -19,6 +20,8 @@ dependencies = [
     "mineru[core]>=2.1.11",
     "mistralai>=1.9.9",
     "networkx>=3.4.2",
+    "nmslib-metabrainz==2.1.3",
+    "numpy<2.0",
     "pandas>=2.3.2",
     "pdfplumber>=0.11.7",
     "pydot>=4.0.1",
@@ -27,12 +30,20 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "rdflib>=7.1.4",
     "requests>=2.32.5",
-    "spacy>=3.8.7",
+    "scispacy==0.5.4",
+    "spacy>=3.7.0,<3.8.0",
     "sparqlwrapper>=2.0.0",
     "tqdm>=4.67.1",
     "unidecode>=1.4.0",
     "unstructured[pdf]>=0.18.14",
+    "tiktoken>=0.11.0",
+    "ratelimit>=2.2.1",
 ]
 
 [tool.uv.sources]
 en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0.tar.gz" }
+en-core-sci-sm = { url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
