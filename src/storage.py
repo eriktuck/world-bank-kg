@@ -21,6 +21,15 @@ CHROMA_DIR = Path("./chroma_db")
 COLLECTION_NAME = "documents"
 
 
+from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.core import Settings
+
+Settings.embed_model = OllamaEmbedding(
+    model_name="nomic-embed-text",
+    base_url="http://localhost:11434",
+    ollama_additional_kwargs={"mirostat": 0},
+)
+
 def reset_storage():
     """Delete old storage directories for a clean state."""
     if STORAGE_DIR.exists():
@@ -165,33 +174,35 @@ def enrich_document_chunks(doc_id: str, acronyms: Dict[str, str], entities: List
         return
 
     # enrich metadata in docstore
-    nodes = docstore.get_nodes(info.node_ids)
-    for node in nodes: 
+    node_ids = info.node_ids
+    nodes = docstore.get_nodes(node_ids)
+    updated_nodes = []
+
+    for node in nodes:
+        text = getattr(node, "text", "")
+
         acronyms_found = [
             {"short": acr, "long": expansion}
             for acr, expansion in acronyms.items()
-            if acr in node.text or expansion in node.text
+            if acr in text or expansion in text
         ]
         entities_found = [
             ent for ent in entities
-            if ent.get("surface") and ent["surface"].lower() in node.text.lower()
+            if ent.get("surface") and ent["surface"].lower() in text.lower()
         ]
 
         node.metadata["acronyms"] = acronyms_found
         node.metadata["entities"] = entities_found
+        updated_nodes.append(node)
 
-        logger.debug(f'For text chunk \n\n{node.text}')
-        logger.debug(f'Entities found \n\n {[ent.get("surface") for ent in entities_found]}')
-        logger.debug(f'Acronyms found \n\n {[acr.get("short") for acr in acronyms_found]}')
+        logger.debug(f'For text chunk \n\n{text[:200]}...')
+        logger.debug(f'Entities found: {[ent.get("surface") for ent in entities_found]}')
+        logger.debug(f'Acronyms found: {[a.get("short") for a in acronyms_found]}')
 
-    # re-persist docstore
+    docstore.add_documents(updated_nodes)
+
     storage_context.persist()
-
-    # OPTIONAL: if you need Chroma filtering, also update vector store
-    # vector_store = storage_context.vector_store
-    # vector_store.add(nodes)   # or .update(), depending on API
-
-    logger.info(f"Enriched {len(nodes)} chunks for document {doc_id}.")
+    logger.info(f"Enriched and persisted {len(updated_nodes)} chunks for document {doc_id}.")
 
 
 
@@ -227,4 +238,18 @@ def main():
     add_file(file_path, kg_id=file_id)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    import json 
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    )
+
+    with open('logs/pipeline_results.json', 'r') as f:
+        results = json.load(f)
+
+    doc_id = results['doc_id']
+    entities = results['entities']
+    acronyms = results['acronyms']
+    enrich_document_chunks(doc_id, acronyms, entities)
