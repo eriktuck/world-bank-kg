@@ -42,8 +42,6 @@ COUNTRY_PROPERTY_MAP = {
     "gdp_per_capita": "P2299"
 }
 
-MULTI_ENTITY_COLUMNS = {"projn", "projectid", "trustfund", "trustfund_key"}
-
 class KnowledgeGraph():
     def __init__(self, ttl_path='world-bank-kg.ttl'):
         self.ttl_path = Path(ttl_path)
