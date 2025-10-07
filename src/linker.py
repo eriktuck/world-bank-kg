@@ -64,32 +64,40 @@ class Wikifier:
         return entity
         
     
-    def wikify(self, entities: Dict) -> Dict:
+    def wikify(self, entities: List[Dict]) -> List[Dict]:
+        # TODO: Add cacheing for cross-document entity lookup
         entities_with_qid = []
-        
+        seen = set()
+
         for ent in entities:
             entity_name = ent.get("surface")
             entity_type = ent.get("label")
+
+            # Skip if already seen
+            key = (entity_name, entity_type)
+            if key in seen:
+                logger.debug(f"Skipping duplicate entity: {key}")
+                continue
+            seen.add(key)
+
             safe_name = self._sanitize_for_sparql(entity_name)
-            
             if not safe_name:
                 logger.debug(f"{entity_name} could not be sanitized")
                 continue
-            
+
             qid = self.get_qid(safe_name)
-            
             if qid:
                 logger.debug(f"{entity_name}: {qid}")
             else:
                 logger.debug(f"{entity_name}: has no QID")
-                
+
             entities_with_qid.append({
                 "surface": entity_name,
                 "label": entity_type,
                 "sparql_safe": safe_name,
                 "qid": qid,
-            }) 
-            
+            })
+
         return entities_with_qid
     
     
