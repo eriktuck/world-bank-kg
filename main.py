@@ -6,6 +6,7 @@ from src.graph import KnowledgeGraph
 from src.pipeline import DocumentPipeline
 from src.reader import Reader
 from src.storage import add_file, enrich_document_chunks, reset_storage
+from src.summarize import OllamaClient, Summarizer
 
 LOG_DIR = Path("./logs")
 LOG_DIR.mkdir(exist_ok=True)
@@ -28,7 +29,7 @@ def main():
     # Load or build the KG
     logger.info("Building Knowledge Graph...")
 
-    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
+    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=True)
 
     # Get list of docs to process
     doc_ids = kg.get_document_ids()
@@ -42,6 +43,7 @@ def main():
     )
     
     for doc_id in doc_ids:
+        doc_id = '10170637'  # TODO
         url = kg.get_url_by_id(doc_id)
 
         if not url:
@@ -79,6 +81,15 @@ def main():
         results_file = LOG_DIR / "pipeline_results.json"
         results_file.write_text(json.dumps(results, indent=2, ensure_ascii=False))
         logger.info(f"Saved results to {results_file}")
+
+        kg.add_text_chunks(doc_id=doc_id)
+
+        client = OllamaClient(model="llama3.2:latest")
+        summarizer = Summarizer(kg, client, backend='ollama')
+        chunk_graph = summarizer.build_chunk_graph()
+        chunk_to_comm, hc = summarizer.detect_communities_hierarchical_leiden(chunk_graph)
+        summarizer.add_communities_to_graph(chunk_to_comm)
+        summarizer.summarize_communities(chunk_to_comm)
 
         break   # TODO
 
