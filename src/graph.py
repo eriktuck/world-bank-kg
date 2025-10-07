@@ -15,6 +15,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from tqdm import tqdm
 
 from src.linker import Wikifier
+from src.storage import load_index
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,8 @@ COUNTRY_PROPERTY_MAP = {
     "gdp_per_capita": "P2299"
 }
 
+MULTI_ENTITY_COLUMNS = {"projn", "projectid", "trustfund", "trustfund_key"}
+
 class KnowledgeGraph():
     def __init__(self, ttl_path='world-bank-kg.ttl'):
         self.ttl_path = Path(ttl_path)
@@ -60,7 +63,9 @@ class KnowledgeGraph():
         self.url = 'https://search.worldbank.org/api/v2/wds'  # TODO: update to v3
         self.params = {
             'format': 'json',
-            'display_title': '"sustainable development"',
+            'docty': 'Project Appraisal Document',
+            'qterm': 'wind turbine',
+            'fl': ','.join(['id', 'display_title', 'count', 'trustfund', 'trustfund_key', 'projn', 'projectid', 'display_title', 'owner', 'pdfurl', 'year', 'last_modified_date', 'docty']),
             'rows': 20,
             'page':1
         }
@@ -138,18 +143,30 @@ class KnowledgeGraph():
         # Reset page index
         self.params['page'] = 1
 
-        for i in range(max_pages):
+        for _ in range(max_pages):
             response = requests.get(self.url, params=self.params)
+            response.raise_for_status()
             data = json.loads(response.content)
 
-            if not data.get('documents'):
+            documents = data.get("documents", {})
+            if not documents:
+                logger.warning("No documents found in API response.")
                 break
 
-            for _, metadata in data['documents'].items():
+            for key, metadata in documents.items():
+                # Skip 'facets' and non-dict entries
+                if not isinstance(metadata, dict):
+                    logger.debug(f"Skipping non-dict entry at key {key}")
+                    continue
+
+                # Skip malformed docs with no 'id'
+                if "id" not in metadata:
+                    logger.debug(f"Skipping non-document entry: {key}")
+                    continue
+
                 metadata_list.append(metadata)
 
-            # TODO
-            self.params['page'] += 1
+            self.params["page"] += 1
 
         df = pd.DataFrame(metadata_list)
 
@@ -169,7 +186,7 @@ class KnowledgeGraph():
             self._sanitize_column
         )
 
-        df.to_csv('output/raw.csv') # TODO remove
+        df.to_csv('output/raw.csv', index=False)
 
         self.metadata = df
 
@@ -244,6 +261,7 @@ class KnowledgeGraph():
 
     
     def populate_graph_with_countries(self):
+        logger.debug(self.metadata['count'].dropna().unique())
         countries = self.metadata['count'].dropna().unique()
         for country in tqdm(countries):
             country_label = country.replace('_', ' ')
@@ -252,6 +270,7 @@ class KnowledgeGraph():
                 qid_uri = f"http://www.wikidata.org/entity/{qid}"
             else:
                 qid_uri = None    
+            logger.debug(f"Added {country_label} with QID {qid}")
             
             self.add_country_to_graph(qid_uri, country, country_label)
             
@@ -307,10 +326,9 @@ class KnowledgeGraph():
                     obj_type = "uri"
                 
                     # Check if we've already added a label for this URIRef
-                    if value not in cache["entities"]:
-                        if label:
-                            self.g.add((obj, self.schema.name, Literal(label, lang="en")))
-                            cache["entities"][value] = label
+                    if label and label not in cache["entities"]:
+                        self.g.add((obj, self.schema.name, Literal(label, lang="en")))
+                        cache["entities"][label] = value
 
                 else:
                     obj = Literal(value)
@@ -515,7 +533,8 @@ class KnowledgeGraph():
         doc_col: str,
         entity_col: str,
         uri_ref: str,
-        predicate: URIRef
+        predicate: URIRef,
+        is_multi_entity: bool = True
     ):
         """
         Generic helper to link documents to entities via a given predicate.
@@ -530,6 +549,8 @@ class KnowledgeGraph():
             URI namespace suffix for the entity (e.g. 'country', 'project', 'trustfund').
         predicate : rdflib.term.URIRef
             The property to use for linking (e.g. schema:countryOfOrigin, schema:isPartOf, schema:funder).
+        is_multi_entity: bool
+            True if the column can contain comma-separated entities (e.g., 'Project A, Project B')
         """
         if self.metadata is None:
             logger.warning("Metadata is not loaded; run get_metadata() first.")
@@ -545,8 +566,12 @@ class KnowledgeGraph():
             doc_uri = self.ex[f"document/{doc_id}"]
 
             # Entities can be comma-separated
-            for ent_id in str(entities).split(","):
-                ent_id = ent_id.strip()
+            if is_multi_entity:
+                ent_list = [e.strip() for e in str(entities).split(",") if e.strip()]
+            else:
+                ent_list = [str(entities).strip()]
+            
+            for ent_id in ent_list:
                 if not ent_id:
                     continue
 
@@ -570,7 +595,8 @@ class KnowledgeGraph():
             doc_col="id",
             entity_col="count",
             uri_ref="country",
-            predicate=self.schema.countryOfOrigin
+            predicate=self.schema.countryOfOrigin,
+            is_multi_entity=False
         )
 
     
@@ -677,6 +703,61 @@ class KnowledgeGraph():
             except Exception as e:
                 logger.warning(f'Skipping bad entity {surface}: {e}')
 
+    
+    
+    def add_text_chunks(self, doc_id: str):
+        """
+        Add text chunks as nodes in the graph and link them to existing entities.
+
+        Each chunk node is linked to:
+        - Its parent document (:isPartOf)
+        - Entities it mentions (:mentions), using existing entity URIs
+        """
+        storage_context = load_index().storage_context
+        docstore = storage_context.docstore
+
+        info = docstore.get_ref_doc_info(doc_id)
+        if not info:
+            logger.warning(f"No nodes found for doc_id={doc_id}")
+            return
+
+        # enrich metadata in docstore
+        nodes = docstore.get_nodes(info.node_ids)
+        doc_uri = self.ex[f"document/{doc_id}"]
+
+        for i, node in enumerate(nodes):
+            node_id = getattr(node, "node_id", f"{doc_id}_chunk_{i}")
+            node_uri = self.ex[f"chunk/{node_id}"]
+
+            logger.debug(node.metadata)
+
+            # Add chunk node
+            self.g.add((node_uri, RDF.type, self.schema.TextObject))
+            self.g.add((node_uri, self.schema.text, Literal(node.text)))
+            self.g.add((node_uri, self.schema.isPartOf, doc_uri))
+
+            logger.debug(f"Entities found: {node.metadata.get('entities', [])}")
+
+            for ent in node.metadata.get('entities', []):
+                
+                qid = ent.get('qid')
+                rdf_safe = ent.get("rdf_safe")
+                
+                if qid:
+                    ent_uri = self.wd[qid]
+                elif rdf_safe:
+                    ent_uri = self.ex[f"entity/{rdf_safe}"]
+                else:
+                    continue
+
+                # Only link if entity URI already exists in graph
+                if (ent_uri, RDF.type, None) in self.g:
+                    self.g.add((node_uri, self.schema.mentions, ent_uri))
+                else:
+                    logger.debug(f"Entity {ent_uri} not found in graph; skipping link.")
+
+        logger.info(f"Added {len(nodes)} chunks for document {doc_id}.")
+
 
     @classmethod
     def load_or_build(
@@ -690,11 +771,18 @@ class KnowledgeGraph():
         """
         ttl_file = Path(ttl_path)
 
-        if rebuild and ttl_file.exists():
-            logger.warning(f"Rebuilding KG, removing existing file at {ttl_file}")
-            ttl_file.unlink()
+        if rebuild: 
+            if ttl_file.exists():
+                logger.warning(f"Rebuilding KG, removing existing file at {ttl_file}")
+                ttl_file.unlink()
+        
+            cache_path = Path(CACHE_FILE)
+            if cache_path.exists():
+                logger.warning(f"Removing cache file at {cache_path}")
+                cache_path.unlink()
 
         kg = cls(ttl_path)
+        logger.info(f"✅ After init: loaded={kg.loaded}, triples={len(kg.g)}")
         
         if rebuild or not kg.loaded:
             kg.build()
@@ -709,9 +797,14 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
     logger.info("Building Knowledge Graph...")
-    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=True)
+    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
 
-    print(kg)
+    # kg.add_text_chunks(doc_id=str(10170637))
+    
+
+    # print(kg)
+
+    kg.save()
 
 
 if __name__ == '__main__':
