@@ -9,6 +9,7 @@ from llama_index.core import Document, StorageContext, VectorStoreIndex, load_in
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.schema import NodeRelationship, RelatedNodeInfo
+from rdflib import Graph, Namespace, RDF, Literal
 
 from src.parser import CustomParser
 
@@ -72,12 +73,13 @@ def _process_file(file_path: Path, storage_context: StorageContext, parser: Cust
     return doc.doc_id
 
 
-def add_file(file_path: str, kg_id: str):
+def add_file(file_path: str, kg_id: str, storage_context: StorageContext | None = None):
     """
     Add a file to the docstore + Chroma vector store.
-    If reset=True, delete existing stores and rebuild from scratch.
     """
-    storage_context = _init_storage()
+    if storage_context is None:
+        storage_context = _init_storage()
+
     parser = CustomParser(include_metadata=True, include_prev_next_rel=True)
 
     llama_id = _process_file(Path(file_path), storage_context, parser, kg_id)
@@ -89,7 +91,7 @@ def add_file(file_path: str, kg_id: str):
     return llama_id
 
 
-def load_index() -> VectorStoreIndex:
+def load_existing_index() -> VectorStoreIndex:
     chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
     collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
     
@@ -165,7 +167,7 @@ def enrich_chunks_with_annotations(chunks: List[Dict],
 
 
 def enrich_document_chunks(doc_id: str, acronyms: Dict[str, str], entities: List[Dict]) -> None:
-    storage_context = load_index().storage_context
+    storage_context = load_existing_index().storage_context
     docstore = storage_context.docstore
 
     info = docstore.get_ref_doc_info(doc_id)
@@ -205,6 +207,73 @@ def enrich_document_chunks(doc_id: str, acronyms: Dict[str, str], entities: List
     logger.info(f"Enriched and persisted {len(updated_nodes)} chunks for document {doc_id}.")
 
 
+def add_communities_from_graph(kg):
+    
+
+    if not kg.loaded:
+        logger.warning("KnowledgeGraph not loaded; cannot add communities.")
+        return
+
+    storage_context = load_existing_index().storage_context
+    docstore = storage_context.docstore
+    graph = kg.g
+    schema = kg.schema
+
+    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
+    existing_ids = set(collection.get()["ids"])
+
+    added = 0
+    new_docs = []
+
+    for community_uri in graph.subjects(RDF.type, schema.Community):
+        abstract = next(graph.objects(community_uri, schema.abstract), None)
+        name = next(graph.objects(community_uri, schema.name), None)
+        identifier = next(graph.objects(community_uri, schema.identifier), None)
+
+        if not abstract:
+            continue
+
+        community_id = str(identifier or community_uri).split("/")[-1]
+        doc_id = f"community-{community_id}"
+
+        if doc_id in existing_ids:
+            logger.debug(f"Skipping already indexed community {doc_id}")
+            continue
+
+        doc = Document(
+            text=str(abstract),
+            doc_id=doc_id,
+            metadata={
+                "uri": str(community_uri),
+                "type": "community_summary",
+                "name": str(name or ""),
+                "identifier": str(identifier or ""),
+            },
+        )
+
+        new_docs.append(doc)
+        added += 1
+
+    if new_docs:
+        embed_model = Settings.embed_model
+
+        for doc in new_docs:
+            try:
+                doc.embedding = embed_model.get_text_embedding(doc.text)
+            except Exception as e:
+                logger.warning(f"Failed to embed doc {doc.doc_id}: {e}")
+                continue
+
+        docstore.add_documents(new_docs)
+        storage_context.vector_store.add(nodes=new_docs)
+
+        storage_context.persist(persist_dir=str(STORAGE_DIR))
+        logger.info(f"Added {added} new community summaries to existing vector store.")
+    else:
+        logger.info("No new community summaries to add.")
+
+
 
 def main():
     """
@@ -237,19 +306,16 @@ def main():
 
     add_file(file_path, kg_id=file_id)
 
+
 if __name__ == "__main__":
     # main()
-    import json 
 
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
-    with open('logs/pipeline_results.json', 'r') as f:
-        results = json.load(f)
+    from src.graph import KnowledgeGraph
 
-    doc_id = results['doc_id']
-    entities = results['entities']
-    acronyms = results['acronyms']
-    enrich_document_chunks(doc_id, acronyms, entities)
+    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
+    add_communities_from_graph(kg)
