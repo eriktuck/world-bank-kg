@@ -12,7 +12,6 @@ import requests
 
 from graspologic.partition import hierarchical_leiden
 from rdflib import URIRef, Literal, RDF
-from src.graph import KnowledgeGraph
 import matplotlib.pyplot as plt
 
 from src.graph import KnowledgeGraph
@@ -52,7 +51,7 @@ class OllamaClient:
     
 
 class Summarizer:
-    def __init__(self, kg: KnowledgeGraph, client=None, backend="openai", cache_path="storage/summaries_cache.json", max_context_tokens=8000):
+    def __init__(self, kg: KnowledgeGraph, client=None, backend="openai", cache_path="summaries_cache.json", max_context_tokens=8000):
         self.kg = kg
         self.client = client
         self.backend = backend
@@ -191,7 +190,7 @@ class Summarizer:
 
         self.kg.save()
 
-        logger.info(f"✅ Added {len(chunk_to_comm)} chunk→community links to graph")
+        logger.info(f"Added {len(chunk_to_comm)} chunk→community links to graph")
 
     
     def summarize_communities(self, chunk_to_comm: dict, max_tokens_per_summary=6000):
@@ -231,7 +230,6 @@ class Summarizer:
                 self._save_cache()
 
                 # Store in KG
-            
                 comm_uri = self.kg.ex[f"community/{comm_id}"]
                 self.kg.g.add((comm_uri, self.kg.schema.abstract, Literal(summary)))
             else:
