@@ -15,7 +15,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from tqdm import tqdm
 
 from src.linker import Wikifier
-from src.storage import load_index
+from src.storage import load_existing_index
 
 logger = logging.getLogger(__name__)
 
@@ -711,7 +711,7 @@ class KnowledgeGraph():
         - Its parent document (:isPartOf)
         - Entities it mentions (:mentions), using existing entity URIs
         """
-        storage_context = load_index().storage_context
+        storage_context = load_existing_index().storage_context
         docstore = storage_context.docstore
 
         info = docstore.get_ref_doc_info(doc_id)
@@ -780,7 +780,7 @@ class KnowledgeGraph():
                 cache_path.unlink()
 
         kg = cls(ttl_path)
-        logger.info(f"✅ After init: loaded={kg.loaded}, triples={len(kg.g)}")
+        logger.info(f"Loaded KG with {len(kg.g)} triples")
         
         if rebuild or not kg.loaded:
             kg.build()
