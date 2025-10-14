@@ -40,6 +40,7 @@ dependencies = [
     "ratelimit>=2.2.1",
     "graspologic>=3.3.0",
     "llama-index-embeddings-ollama>=0.6.0",
+    "llama-index-llms-ollama>=0.6.2",
 ]
 
 [tool.uv.sources]
