@@ -9,6 +9,7 @@ from src.acronyms import AcronymExtractor
 from src.ner import EntityExtractor
 from src.linker import Wikifier 
 from src.reader import Reader
+from src.summarize import OllamaClient
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,10 @@ class DocumentPipeline:
         else:
             self.entity_ruler = self.nlp.get_pipe("entity_ruler")
         
-        self.acronym_extractor = AcronymExtractor(file_id)
+        self.acronym_extractor = AcronymExtractor(
+            file_id, 
+            client=OllamaClient(model="llama3.2:latest"),
+            backend='ollama')
         self.entity_extractor = EntityExtractor()
         
         self.reader = Reader()  # TODO: use ArtifactStore from storage.py instead

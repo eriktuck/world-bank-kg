@@ -3,6 +3,7 @@ import json
 from openai import OpenAI
 import html
 import logging
+import re
 
 from llama_index.core.vector_stores.types import MetadataFilters, ExactMatchFilter
 
@@ -11,8 +12,13 @@ from src.storage import load_index
 logger = logging.getLogger(__name__)
 
 class AcronymExtractor:
-    def __init__(self, doc_id: str):
+    def __init__(self, doc_id: str, client=None, backend="openai"):
         self.doc_id = doc_id
+        self.client = client
+        self.backend = backend
+        if not client:
+            self.client = OpenAI()
+        
         self.acronyms = None
         self.entities = None
     
@@ -50,9 +56,8 @@ class AcronymExtractor:
         return "---\n\n".join(results)
     
 
-    def _extract_acronyms_with_llm(self, text, client=None) -> Dict:
-        if not client:
-            client = OpenAI()
+    def _extract_acronyms_with_llm(self, text) -> Dict:
+
         
         prompt = """
         Extract a dictionary of acronyms and their definitions from the following text.
@@ -60,24 +65,47 @@ class AcronymExtractor:
         Return as a valid JSON dictionary like: {"ABC": "Definition of ABC", ...}
 
         Text:
-        """ + text
+        """ + text[:10000]
 
         logger.debug(f"Prompt sent for acronyms \n\n {prompt}")
 
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are an expert at understanding document formatting and extracting structured acronym definitions."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0,
-        )
+        messages=[
+            {"role": "system", "content": "You are an expert at understanding document formatting and extracting structured acronym definitions. Always output strict JSON only."},
+            {"role": "user", "content": prompt}
+        ]
 
-        logger.debug(f'Model returns result {response}')
+        if self.backend == "openai":
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0,
+            )
+            response_content = response.choices[0].message.content
 
-        declared_acronyms = json.loads(response.choices[0].message.content)
+        elif self.backend == "ollama":
+            response = self.client.chat(messages, temperature=0.0)
+            response_content = response["choices"][0]["message"]["content"]
+        
+        logger.debug(f'Model returns result {response_content}')
 
-        return declared_acronyms
+        # Defensive parsing
+        try:
+            return json.loads(response_content)
+
+        except json.JSONDecodeError:
+            match = re.search(r"\{.*\}", response_content, re.DOTALL)
+            if match:
+                json_str = match.group(0)
+                try:
+                    return json.loads(json_str)
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse extracted JSON block — trying to repair it.")
+                    json_str = re.sub(r"(?<=\w)'(?=\w)", '"', json_str)
+                    json_str = re.sub(r",\s*}", "}", json_str)
+                    return json.loads(json_str)
+            else:
+                logger.error("No JSON object found in model output.")
+                return {}
     
 
     def _extract_inline_acronyms(self, doc) -> Dict:
