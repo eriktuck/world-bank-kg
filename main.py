@@ -5,7 +5,7 @@ import json
 from src.graph import KnowledgeGraph
 from src.pipeline import DocumentPipeline
 from src.reader import Reader
-from src.storage import add_file, enrich_document_chunks, reset_storage
+from src.storage import add_file, enrich_document_chunks, reset_storage, add_communities_from_graph
 from src.summarize import OllamaClient, Summarizer
 
 LOG_DIR = Path("./logs")
@@ -29,7 +29,7 @@ def main():
     # Load or build the KG
     logger.info("Building Knowledge Graph...")
 
-    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=True)
+    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
 
     # Get list of docs to process
     doc_ids = kg.get_document_ids()
@@ -90,6 +90,8 @@ def main():
         chunk_to_comm, hc = summarizer.detect_communities_hierarchical_leiden(chunk_graph)
         summarizer.add_communities_to_graph(chunk_to_comm)
         summarizer.summarize_communities(chunk_to_comm)
+
+        add_communities_from_graph(kg)
 
         break   # TODO
 
