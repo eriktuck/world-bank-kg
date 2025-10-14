@@ -1,6 +1,6 @@
 # Overview
 **world-bank-kg** is a demo repo for a *Graph Retrieval-Augmented Generation* (GraphRAG) framework for question answering with the World Bank Open Knowledge Repository (OKR). This project explores approaches to promote Semantic Interoperability (SI) within and across humanitarian aid and international development organizations, including 
-1. **Semantic graph integration:** Introduces a graph layer based on the Resource Description Framework (RDF), implemented using `RDFLib`, to represent entities, relationships, and document metadata in a standards-compliant and machine-readable format, enabling connection with the broader Semantic Web.
+1. **Semantic graph integration:** Introduces a graph layer based on the Resource Description Framework (RDF) to represent entities, relationships, and document metadata in a standards-compliant and machine-readable format, enabling connection with the broader Semantic Web.
 2. **Ontology and taxonomy alignment:** Extends beyond keyword- and embedding-based retrieval by linking extracted entities to established taxonomies and ontologies such as Wikidata, UNBIS Thesaurus, and the SDG Taxonomy for semantic interoperability promoting cross-institutional reuse and alignment.
 3. **nowledge preservation:** Demonstrates how graph-based AI pipelines can preserve, structure, and synthesize institutional knowledge, supporting long-term discoverability and learning.
 
