@@ -19,7 +19,7 @@ from src.storage import load_existing_index
 
 logger = logging.getLogger(__name__)
 
-CACHE_FILE = "wikidata_cache.json"
+CACHE_FILE = "cache/wikidata_cache.json"
 
 COLUMN_TO_SCHEMA = {
     "id": "identifier",
