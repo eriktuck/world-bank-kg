@@ -171,33 +171,33 @@ class CustomParser:
                     buffer_len += len(content)
                     continue
 
-                # ---- Handle tables/images ----
-                if etype in ("table", "image"):
-                    flush_buffer()
-                    metadata = doc.metadata.copy()
-                    if self.include_metadata:
-                        for k, v in element.items():
-                            if k not in {"type", "table_body", "img_path"}:
-                                metadata[k] = v
-                    metadata["headers"] = " > ".join([h for _, h in (buffer_headers or header_stack)])
-                    if etype == "table":
-                        text_value = element.get("table_body", "").strip()
-                        if not text_value:
-                            logger.warning("Skipping empty table element")
-                            continue
-                    elif etype == "image":
-                        text_value = element.get("img_path", "").strip()
-                        if not text_value:
-                            logger.warning("Skipping empty image element")
-                            continue
-                    nodes.append(
-                        TextNode(
-                            text=text_value,
-                            ref_doc_id=doc.doc_id,
-                            metadata=self._sanitize_metadata(metadata),
-                        )
-                    )
-                    continue
+                # # ---- Handle tables/images ----
+                # if etype in ("table", "image"):
+                #     flush_buffer()
+                #     metadata = doc.metadata.copy()
+                #     if self.include_metadata:
+                #         for k, v in element.items():
+                #             if k not in {"type", "table_body", "img_path"}:
+                #                 metadata[k] = v
+                #     metadata["headers"] = " > ".join([h for _, h in (buffer_headers or header_stack)])
+                #     if etype == "table":
+                #         text_value = element.get("table_body", "").strip()
+                #         if not text_value:
+                #             logger.warning("Skipping empty table element")
+                #             continue
+                #     elif etype == "image":
+                #         text_value = element.get("img_path", "").strip()
+                #         if not text_value:
+                #             logger.warning("Skipping empty image element")
+                #             continue
+                #     nodes.append(
+                #         TextNode(
+                #             text=text_value,
+                #             ref_doc_id=doc.doc_id,
+                #             metadata=self._sanitize_metadata(metadata),
+                #         )
+                #     )
+                #     continue
 
                 # ---- Unknown element type ----
                 logger.warning(f"Skipping unknown element type: {etype}")
