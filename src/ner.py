@@ -6,6 +6,7 @@ import logging
 from rdflib import URIRef
 import re
 from urllib.parse import quote
+import json
 
 from src.linker import Wikifier
 
@@ -92,3 +93,29 @@ class EntityExtractor:
         """Collect all entity spans (including those added by EntityRuler)."""
         return [{"surface": ent.text, "label": ent.label_}
             for ent in doc.ents if ent.label_ not in EXCLUDED_ENTS]
+    
+
+def main():
+    model = "en_core_web_sm"
+    md_text = "This chapter introduces newly developed concepts about sustainable hazardous waste management and treatment and describes the key elements of sustainable hazardous waste management in the context of current broader issues (e.g., renewable energy and climate change). It also discusses fundamentals and basic components of sustainable hazardous waste and presents technical options for sustainable hazardous waste treatment and remediation. Microorganisms play an important role in wastewater treatment because of their immense potential for immobilization and bio-accumulative properties. Next, the chapter explains disposal of hazardous waste and reviews adjustments to meet global challenges. The choice of disposal should be based on evaluation of economics and potential pollution risks. Finally, the chapter identifies future trends and challenges for sustainable hazardous waste management/treatment, providing research recommendations to help achieve the broader goals of sustainability."
+    nlp = spacy.load(model)
+    ruler = nlp.add_pipe("entity_ruler", before="ner", config={"phrase_matcher_attr": "LOWER"})
+    
+    with open('cache/unbis_vocab.json', 'r', encoding='utf-8') as f:
+        unbis_terms = json.loads(f.read())
+
+    patterns = [
+        {
+            "label": "UNBIS_TERM", 
+            "pattern": term.lower(),
+            "id": href
+        }
+        for term, href in unbis_terms.items()
+    ]
+    ruler.add_patterns(patterns)
+    doc = nlp(md_text)
+    for ent in doc.ents:
+        print(ent.text, ent.label_, ent.ent_id_)
+
+if __name__ == "__main__":
+    main()
