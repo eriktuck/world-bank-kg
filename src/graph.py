@@ -763,7 +763,7 @@ class KnowledgeGraph():
         self.link_documents_to_projects()
         self.link_documents_to_trustfunds()
 
-        # Update is_loaded flag
+        # Update loaded flag
         self.loaded = True
     
 
