@@ -762,6 +762,9 @@ class KnowledgeGraph():
         self.link_documents_to_countries()
         self.link_documents_to_projects()
         self.link_documents_to_trustfunds()
+
+        # Update is_loaded flag
+        self.loaded = True
     
 
     def save(self):
