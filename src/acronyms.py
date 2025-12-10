@@ -7,7 +7,7 @@ import re
 
 from llama_index.core.vector_stores.types import MetadataFilters, ExactMatchFilter
 
-from src.storage import load_index
+from src.storage import load_existing_index
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class AcronymExtractor:
     
 
     def _get_acronym_section(self) -> Text:
-        index = load_index()
+        index = load_existing_index()
 
         query_str = """
         Find sections of the document that define acronyms or abbreviations.

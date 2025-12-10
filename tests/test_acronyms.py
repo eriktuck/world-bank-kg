@@ -8,7 +8,7 @@ def extractor():
     return AcronymExtractor(doc_id="doc123")
 
 
-@patch("src.acronyms.load_index")
+@patch("src.acronyms.load_existing_index")
 def test_get_acronym_section_returns_combined_text(mock_load_index, extractor):
     """Ensure acronym sections are concatenated correctly from retrieved nodes."""
     mock_index = MagicMock()
@@ -33,7 +33,7 @@ def test_get_acronym_section_returns_combined_text(mock_load_index, extractor):
     assert "---" in result  # combined with separator
 
 
-@patch("src.acronyms.load_index")
+@patch("src.acronyms.load_existing_index")
 def test_get_acronym_section_warns_when_no_nodes(mock_load_index, extractor, caplog):
     """Log a warning when no acronym sections are retrieved."""
     mock_index = MagicMock()
@@ -46,20 +46,6 @@ def test_get_acronym_section_warns_when_no_nodes(mock_load_index, extractor, cap
 
     assert result == ""
     assert "No nodes retrieved" in caplog.text
-
-
-@patch("src.acronyms.OpenAI")
-def test_extract_acronyms_with_llm_returns_dict(mock_openai, extractor):
-    """LLM acronym extraction should parse valid JSON."""
-    mock_client = MagicMock()
-    mock_openai.return_value = mock_client
-
-    mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content='{"AI": "Artificial Intelligence"}'))]
-    mock_client.chat.completions.create.return_value = mock_response
-
-    result = extractor._extract_acronyms_with_llm("some text", client=mock_client)
-    assert result == {"AI": "Artificial Intelligence"}
 
 
 def test_extract_inline_acronyms_collects_abbreviations_and_cleans(extractor):

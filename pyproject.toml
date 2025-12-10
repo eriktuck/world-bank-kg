@@ -9,6 +9,7 @@ dependencies = [
     "docling>=2.48.0",
     "en-core-web-sm",
     "en-core-sci-sm",
+    "en-core-web-lg",
     "ipykernel>=6.30.1",
     "langchain>=0.3.27",
     "langchain-community>=0.3.29",
@@ -41,11 +42,15 @@ dependencies = [
     "graspologic>=3.3.0",
     "llama-index-embeddings-ollama>=0.6.0",
     "llama-index-llms-ollama>=0.6.2",
+    "beautifulsoup4>=4.14.2",
+    "markdownify>=1.2.2",
+    "spacy-entity-linker>=1.0.3",
 ]
 
 [tool.uv.sources]
 en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0.tar.gz" }
 en-core-sci-sm = { url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz" }
+en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

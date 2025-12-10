@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(dotenv_path="secrets/.env")
 
+CACHE_PATH = Path("cache/community_summaries.json")
 
 class OllamaClient:
     """
@@ -51,7 +52,7 @@ class OllamaClient:
     
 
 class Summarizer:
-    def __init__(self, kg: KnowledgeGraph, client=None, backend="openai", cache_path="summaries_cache.json", max_context_tokens=8000):
+    def __init__(self, kg: KnowledgeGraph, client=None, backend="openai", cache_path=CACHE_PATH, max_context_tokens=8000):
         self.kg = kg
         self.client = client
         self.backend = backend

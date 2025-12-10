@@ -19,7 +19,7 @@ from src.storage import load_existing_index
 
 logger = logging.getLogger(__name__)
 
-CACHE_FILE = "wikidata_cache.json"
+CACHE_FILE = "cache/wikidata_cache.json"
 
 COLUMN_TO_SCHEMA = {
     "id": "identifier",
@@ -42,11 +42,25 @@ COUNTRY_PROPERTY_MAP = {
     "gdp_per_capita": "P2299"
 }
 
+PROPERTY_TYPE_MAP = {
+  "P30": "LOC",
+  "P122": "ORG",
+  "P1387": "ORG",
+  "P38": "MONEY",
+  "P37": "LANGUAGE",
+  "P1082": "CARDINAL",
+  "P2299": "MONEY"
+}
+
+
 class KnowledgeGraph():
     def __init__(self, ttl_path='world-bank-kg.ttl'):
         self.ttl_path = Path(ttl_path)
         self.g = Graph()
         self.loaded = False
+        self.linker = Wikifier()
+        self.metadata = None
+        self.cache = self._load_cache()
 
         if self.ttl_path.exists():
             logger.info(f"Loading KG from {self.ttl_path}")
@@ -63,7 +77,10 @@ class KnowledgeGraph():
             'format': 'json',
             'docty': 'Project Appraisal Document',
             'qterm': 'wind turbine',
-            'fl': ','.join(['id', 'display_title', 'count', 'trustfund', 'trustfund_key', 'projn', 'projectid', 'display_title', 'owner', 'pdfurl', 'year', 'last_modified_date', 'docty']),
+            'fl': ','.join(
+                ['id', 'display_title', 'count', 'trustfund', 'trustfund_key', 'projn', 
+                 'projectid', 'display_title', 'owner', 'pdfurl', 'year', 'last_modified_date', ''
+                 'docty']),
             'rows': 20,
             'page':1
         }
@@ -81,18 +98,6 @@ class KnowledgeGraph():
         # Add identifier properties
         self.g.add((self.schema.identifier, RDF.type, RDF.Property))
         self.g.add((self.schema.identifier, RDFS.label, Literal("Identifier")))
-
-        self.linker = Wikifier()
-        self.metadata = None
-        
-        if os.path.exists(CACHE_FILE):
-            with open(CACHE_FILE, "r") as f:
-                self.cache = json.load(f)
-        else:
-            self.cache = {
-                "countries": {},
-                "entities": {}
-            }
 
 
     def __repr__(self):
@@ -114,10 +119,19 @@ class KnowledgeGraph():
         return repr_str
 
 
+    def _load_cache(self) -> Dict:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, "r") as f:
+                cache = json.load(f)
+            return cache
+        return {
+            "countries": {},
+            "entities": {}
+        }
+    
     def _get_cache(self):
         if self.cache:
             return self.cache
-    
 
     def _write_cache(self, cache: Dict, write_type: str = 'w'):
         with open(CACHE_FILE, write_type) as f:
@@ -219,7 +233,7 @@ class KnowledgeGraph():
         return newClass
 
 
-    def _create_instance(self, class_uri: URIRef, uri_ref: str, label: str) -> URIRef:
+    def _create_class_instance(self, class_uri: URIRef, uri_ref: str, label: str) -> URIRef:
         """Create a new instance (individual) of a given class."""
         instance_uri = URIRef(self.ex + uri_ref)
         self.g.add((instance_uri, RDF.type, class_uri))
@@ -263,7 +277,7 @@ class KnowledgeGraph():
         countries = self.metadata['count'].dropna().unique()
         for country in tqdm(countries):
             country_label = country.replace('_', ' ')
-            qid = self.linker.get_qid(country_label)
+            qid = self.linker.get_qid(country_label, entity_type='GPE')
             if qid:
                 qid_uri = f"http://www.wikidata.org/entity/{qid}"
             else:
@@ -324,9 +338,12 @@ class KnowledgeGraph():
                     obj_type = "uri"
                 
                     # Check if we've already added a label for this URIRef
-                    if label and label not in cache["entities"]:
-                        self.g.add((obj, self.schema.name, Literal(label, lang="en")))
-                        cache["entities"][label] = value
+                    ent_type = PROPERTY_TYPE_MAP.get(prop_uri.split("/")[-1], None)
+                    if label:
+                        cache_key = f'{label}|{ent_type}'
+                        if cache_key not in cache["entities"]:
+                            self.g.add((obj, self.schema.name, Literal(label, lang="en")))
+                            cache["entities"][cache_key] = value
 
                 else:
                     obj = Literal(value)
@@ -426,7 +443,7 @@ class KnowledgeGraph():
                 identifier = value.strip()
                 label = ids.get(identifier, identifier) if ids else identifier
                 instance_uri = f"{uri_ref}/{identifier}"
-                resource = self._create_instance(newClass, instance_uri, label)
+                resource = self._create_class_instance(newClass, instance_uri, label)
                 self.g.add((resource, id_property, Literal(identifier)))
 
             # Create subclass of newClass and use value in URI
@@ -584,6 +601,7 @@ class KnowledgeGraph():
                 # Link doc → entity
                 self.g.add((doc_uri, predicate, ent_uri))
                 
+
     def link_documents_to_countries(self):
         """
         Link each document in metadata to its associated country
@@ -622,30 +640,6 @@ class KnowledgeGraph():
             uri_ref="trustfund",
             predicate=self.schema.funder
         )
-
-    
-    def build(self):
-        """Builds knowledge graph from metadata."""
-        self.get_metadata()
-        self.add_countries()
-        self.add_world_bank_documents(
-            extra_columns=['pdfurl', 'last_modified_date', 'docty', 'owner'])
-        self.add_trustfunds()
-        self.add_projects()
-        self.link_documents_to_countries()
-        self.link_documents_to_projects()
-        self.link_documents_to_trustfunds()
-    
-
-    def save(self):
-        """Save graph to file. Ensure format and file extension are compatible."""
-        self.g.serialize(
-            destination=self.ttl_path, 
-            format='turtle', 
-            prefixes=self.prefixes, 
-            encoding='utf-8'
-        )
-        logger.info(f"Knowledge graph saved to {self.ttl_path}")
 
 
     def get_document_ids(self) -> List[str]:
@@ -757,6 +751,33 @@ class KnowledgeGraph():
         logger.info(f"Added {len(nodes)} chunks for document {doc_id}.")
 
 
+    def build(self):
+        """Builds knowledge graph from metadata."""
+        self.get_metadata()
+        self.add_countries()
+        self.add_world_bank_documents(
+            extra_columns=['pdfurl', 'last_modified_date', 'docty', 'owner'])
+        self.add_trustfunds()
+        self.add_projects()
+        self.link_documents_to_countries()
+        self.link_documents_to_projects()
+        self.link_documents_to_trustfunds()
+
+        # Update loaded flag
+        self.loaded = True
+    
+
+    def save(self):
+        """Save graph to file. Ensure format and file extension are compatible."""
+        self.g.serialize(
+            destination=self.ttl_path, 
+            format='turtle', 
+            prefixes=self.prefixes, 
+            encoding='utf-8'
+        )
+        logger.info(f"Knowledge graph saved to {self.ttl_path}")
+
+
     @classmethod
     def load_or_build(
         cls, 
@@ -795,7 +816,7 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
     logger.info("Building Knowledge Graph...")
-    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
+    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=True)
 
     # kg.add_text_chunks(doc_id=str(10170637))
     
