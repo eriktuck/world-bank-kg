@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Any
+import json 
 
 import spacy
 from spacy.pipeline import EntityRuler
@@ -25,7 +26,7 @@ class DocumentPipeline:
 
         # Add entity ruler (after NER)
         if "entity_ruler" not in self.nlp.pipe_names:
-            self.entity_ruler = self.nlp.add_pipe("entity_ruler", before="ner")
+            self.entity_ruler = self.nlp.add_pipe("entity_ruler", before="ner", config={"phrase_matcher_attr": "LOWER"})
         else:
             self.entity_ruler = self.nlp.get_pipe("entity_ruler")
         
@@ -43,11 +44,18 @@ class DocumentPipeline:
         
         doc = self.nlp(md_text)
         
+        # Get and add acronyms
         acronyms = self.acronym_extractor.extract(doc)
         logger.info(f"Extracted {len(acronyms)} acronyms: {list(acronyms.keys())}")
 
-        self.entity_extractor.add_acronym_patterns(self.entity_ruler, acronyms)
+        self.entity_extractor.add_acronym_patterns(acronyms)
 
+        # Read and add UNBIS patterns
+        with open('cache/unbis_vocab.json', 'r', encoding='utf-8') as f:
+            unbis_terms = json.loads(f.read())
+        self.entity_extractor.add_unbis_patterns(unbis_terms)
+
+        # Apply the EntityRuler to the doc
         doc = self.entity_extractor.apply_entity_ruler(self.entity_ruler, doc)
 
         entities = self.entity_extractor.collect_entities(doc)

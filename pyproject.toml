@@ -43,6 +43,8 @@ dependencies = [
     "llama-index-embeddings-ollama>=0.6.0",
     "llama-index-llms-ollama>=0.6.2",
     "beautifulsoup4>=4.14.2",
+    "markdownify>=1.2.2",
+    "spacy-entity-linker>=1.0.3",
 ]
 
 [tool.uv.sources]

@@ -29,7 +29,7 @@ def main():
     # Load or build the KG
     logger.info("Building Knowledge Graph...")
 
-    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=True)
+    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
 
     # Get list of docs to process
     doc_ids = kg.get_document_ids()

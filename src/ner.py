@@ -23,7 +23,7 @@ EXCLUDED_ENTS = ['DATE', 'TIME', 'PERCENT',
 
 class EntityExtractor:
     def __init__(self):
-        pass
+        self.patterns = []
 
     
     def _sanitize_for_rdflib(self, entity: str) -> str | None:
@@ -54,17 +54,16 @@ class EntityExtractor:
         return entities
     
 
-    def add_acronym_patterns(self, entity_ruler, acronyms):
+    def add_acronym_patterns(self, acronyms):
         """
         Add both acronym (e.g., 'STEP') and expanded form (e.g.,
         'Systematic Tracking and Exchanges in Procurement') patterns to the EntityRuler.
         Gives them priority over SpaCy NER and allows case-insensitive matching.
         """
-        patterns = []
 
         for abbr, expanded in acronyms.items():
             # Add abbreviation pattern
-            patterns.append({
+            self.patterns.append({
                 "label": "ACRONYM",
                 "pattern": [{"LOWER": abbr.lower()}],
                 "id": abbr
@@ -73,25 +72,35 @@ class EntityExtractor:
             # Add expanded form pattern (case-insensitive token sequence)
             if expanded and isinstance(expanded, str):
                 tokens = [{"LOWER": t.lower()} for t in expanded.split()]
-                patterns.append({
+                self.patterns.append({
                     "label": "ACRONYM_EXPANDED",
                     "pattern": tokens,
                     "id": expanded
                 })
 
-        if patterns:
-            entity_ruler.add_patterns(patterns)
-            logger.debug(f"Added {len(patterns)} acronym + expanded patterns to EntityRuler.")
-
+    def add_unbis_patterns(self, unbis_terms):
+        """
+        Add UNBIS terms to the EntityRuler for matching.
+        Gives them priority over SpaCy NER and allows case-insensitive matching.
+        """
+        for term, href in unbis_terms.items():
+            self.patterns.append({
+                "label": "UNBIS_TERM", 
+                "pattern": term.lower(),
+                "id": href
+            })        
 
     def apply_entity_ruler(self, entity_ruler, doc):
         """Apply just the EntityRuler to the existing Doc."""
+        if self.patterns:
+            entity_ruler.add_patterns(self.patterns)
+            logger.debug(f"Added {len(self.patterns)} patterns to EntityRuler.")
+
         return entity_ruler(doc)
-    
 
     def collect_entities(self, doc) -> List[Dict]:
         """Collect all entity spans (including those added by EntityRuler)."""
-        return [{"surface": ent.text, "label": ent.label_}
+        return [{"surface": ent.text, "label": ent.label_, 'id': ent.id_, 'qid': None}
             for ent in doc.ents if ent.label_ not in EXCLUDED_ENTS]
     
 
@@ -99,23 +108,22 @@ def main():
     model = "en_core_web_sm"
     md_text = "This chapter introduces newly developed concepts about sustainable hazardous waste management and treatment and describes the key elements of sustainable hazardous waste management in the context of current broader issues (e.g., renewable energy and climate change). It also discusses fundamentals and basic components of sustainable hazardous waste and presents technical options for sustainable hazardous waste treatment and remediation. Microorganisms play an important role in wastewater treatment because of their immense potential for immobilization and bio-accumulative properties. Next, the chapter explains disposal of hazardous waste and reviews adjustments to meet global challenges. The choice of disposal should be based on evaluation of economics and potential pollution risks. Finally, the chapter identifies future trends and challenges for sustainable hazardous waste management/treatment, providing research recommendations to help achieve the broader goals of sustainability."
     nlp = spacy.load(model)
-    ruler = nlp.add_pipe("entity_ruler", before="ner", config={"phrase_matcher_attr": "LOWER"})
+    doc = nlp(md_text)
+
+    entity_ruler = nlp.add_pipe("entity_ruler", before="ner", config={"phrase_matcher_attr": "LOWER"})
+
+    entity_extractor = EntityExtractor()
     
     with open('cache/unbis_vocab.json', 'r', encoding='utf-8') as f:
         unbis_terms = json.loads(f.read())
+    entity_extractor.add_unbis_patterns(unbis_terms)
 
-    patterns = [
-        {
-            "label": "UNBIS_TERM", 
-            "pattern": term.lower(),
-            "id": href
-        }
-        for term, href in unbis_terms.items()
-    ]
-    ruler.add_patterns(patterns)
-    doc = nlp(md_text)
-    for ent in doc.ents:
-        print(ent.text, ent.label_, ent.ent_id_)
+    doc = entity_extractor.apply_entity_ruler(entity_ruler, doc)
+
+    entities = entity_extractor.collect_entities(doc)
+    
+    for ent in entities:
+        print(ent.get('surface'), ent.get('label'), ent.get('id'))
 
 if __name__ == "__main__":
     main()
