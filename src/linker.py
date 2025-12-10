@@ -57,9 +57,22 @@ class Wikifier:
 
 
     def wikify(self, entities: List[Dict]) -> List[Dict]:
-        # TODO: Add cacheing for cross-document entity lookup
         entities_with_qid = []
         seen = set()
+
+        # Get the dictionary of cached entities
+        cached_entities = self.cache.get("entities", {}) 
+
+        for cache_key in cached_entities.keys():
+            # Cache keys are in the format 'name|type'.
+            try:
+                entity_name, entity_type = cache_key.split('|', 1)
+                seen.add((entity_name, entity_type))
+            except ValueError:
+                # Handle case where key might not have the expected format
+                logger.warning(f"Skipping malformed cache key: {cache_key}")
+                
+        logger.debug(f"Cache has {len(seen)} items.")
 
         for ent in entities:
             entity_name = ent.get("surface")
@@ -72,7 +85,7 @@ class Wikifier:
             # Skip if already seen
             key = (entity_name.lower(), entity_type.lower())
             if key in seen:
-                logger.debug(f"Skipping duplicate entity: {key}")
+                logger.debug(f"Skipping duplicate/cached entity: {key}")
                 continue
             seen.add(key)
 
@@ -81,6 +94,17 @@ class Wikifier:
             if qid_url:
                 qid = qid_url.split("/")[-1]
                 logger.debug(f"Cache hit for {entity_name} ({entity_type}): {qid}")
+                
+                # Add the result from the cache to the final list and skip SPARQL/network call
+                entities_with_qid.append({
+                    "surface": entity_name,
+                    "label": entity_type,
+                    "sparql_safe": sanitize_for_sparql(entity_name),
+                    "qid": qid,
+                })
+                continue
+            
+            # Not in cache; proceed to query Wikidata
             else:
                 safe_name = sanitize_for_sparql(entity_name)
                 if not safe_name:
@@ -95,6 +119,7 @@ class Wikifier:
                 logger.debug(f"{entity_name}: {qid}")
             else:
                 logger.debug(f"{entity_name}: has no QID")
+                self.cache['entities'][cache_key] = None
                 qid_url = None
 
             entities_with_qid.append({
@@ -104,9 +129,8 @@ class Wikifier:
                 "qid": qid,
             })
 
-            with open(CACHE_FILE, 'w') as f:
-                json.dump(self.cache, f, ensure_ascii=False, indent=4)
-
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(self.cache, f, ensure_ascii=False, indent=4)
 
         return entities_with_qid
 
