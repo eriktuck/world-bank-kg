@@ -1,5 +1,7 @@
 [![DOI](https://zenodo.org/badge/1027898631.svg)](https://doi.org/10.5281/zenodo.17350646)
+
 [Read the concept note](https://eriktuck.com/blog/graphrag-for-global-development---concept-note/)
+
 # Overview
 **world-bank-kg** is a demo repo for a *Graph Retrieval-Augmented Generation* (GraphRAG) framework for question answering with the World Bank Open Knowledge Repository (OKR). This project explores approaches to promote Semantic Interoperability (SI) within and across humanitarian aid and international development organizations, including 
 1. **Semantic graph integration:** Introduces a graph layer based on the Resource Description Framework (RDF) to represent entities, relationships, and document metadata in a standards-compliant and machine-readable format, enabling connection with the broader Semantic Web.
