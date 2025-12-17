@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List, Any
-import json 
+import json
+from pathlib import Path
 
 import spacy
 from spacy.pipeline import EntityRuler
@@ -11,8 +12,43 @@ from src.ner import EntityExtractor
 from src.linker import Wikifier 
 from src.reader import Reader
 from src.summarize import OllamaClient
+from src.storage import LlamaStorage
+from src.parser import CustomParser
 
 logger = logging.getLogger(__name__)
+
+class IngestionPipeline:
+    def __init__(self, reader: Reader, parser: CustomParser):
+        self.reader = reader
+        self.parser = parser
+        self.storage = LlamaStorage()
+    
+    def ingest_document(self, doc_id: str):
+        """
+        Orchestrates the flow for a single document.
+        Returns True if successful, False otherwise.
+        """
+        if self._document_exists(doc_id):
+            logger.info(f"Document {doc_id} already exists in storage. Skipping ingestion.")
+            return True
+
+        try:
+            output_path: Path = self.reader.process_doc(doc_id)
+
+            if not output_path or not output_path.exists():
+                logger.error(f"Failed to process document {doc_id}. Output path invalid.")
+                return False
+        except:
+            pass
+            
+
+    def _document_exists(self, doc_id: str) -> bool:
+        """
+        Check if a document with the given doc_id already exists in storage.
+        """
+        ref_doc_info = self.storage.context.docstore.get_ref_doc_info(doc_id)
+        ref_doc_exists = ref_doc_info is not None
+        return ref_doc_exists
 
 
 class DocumentPipeline:

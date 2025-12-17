@@ -5,7 +5,7 @@ import json
 from src.graph import KnowledgeGraph
 from src.pipeline import DocumentPipeline
 from src.reader import Reader
-from src.storage import add_file, enrich_document_chunks, reset_storage, add_communities_from_graph
+from src.storage import LlamaStorage, add_file, enrich_document_chunks, add_communities_from_graph
 from src.summarize import OllamaClient, Summarizer
 
 LOG_DIR = Path("./logs")
@@ -56,7 +56,7 @@ def main():
 
         # Chunk and store file
         json_file_path = Path(f'output/{doc_id}/auto/{doc_id}_content_list.json')
-        reset_storage()
+        storage = LlamaStorage()
         add_file(json_file_path, kg_id=doc_id)
     
         # Run pipeline

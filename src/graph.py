@@ -15,7 +15,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from tqdm import tqdm
 
 from src.linker import Wikifier
-from src.storage import load_existing_index
+from src.storage import LlamaStorage
 
 logger = logging.getLogger(__name__)
 
@@ -705,7 +705,8 @@ class KnowledgeGraph():
         - Its parent document (:isPartOf)
         - Entities it mentions (:mentions), using existing entity URIs
         """
-        storage_context = load_existing_index().storage_context
+        storage = LlamaStorage()
+        storage_context = storage.context
         docstore = storage_context.docstore
 
         info = docstore.get_ref_doc_info(doc_id)
