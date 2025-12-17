@@ -34,7 +34,7 @@ class Reader:
             **self.kwargs
         )
 
-        return file_id
+        return Path(f'output/{file_id}/auto/{file_id}_content_list.json')
 
     
     def get_markdown(self, file_id):

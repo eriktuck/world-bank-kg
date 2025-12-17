@@ -2,10 +2,13 @@ import shutil
 import logging
 from pathlib import Path
 from typing import Dict, List
+import json
+import time
 
 import chromadb
 from dotenv import load_dotenv
 from llama_index.core import Document, StorageContext, VectorStoreIndex, load_index_from_storage
+from llama_index.core.schema import BaseNode
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.schema import NodeRelationship, RelatedNodeInfo
@@ -31,31 +34,89 @@ Settings.embed_model = OllamaEmbedding(
     ollama_additional_kwargs={"mirostat": 0},
 )
 
-def reset_storage():
-    """Delete old storage directories for a clean state."""
-    if STORAGE_DIR.exists():
-        shutil.rmtree(STORAGE_DIR)
-        logger.info("Deleted old llamaindex storage.")
-    if CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR)
-        logger.info("Deleted old ChromaDB storage.")
+class LlamaStorage:
+    _instance = None
+    _initialized = None
 
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(LlamaStorage, cls).__new__(cls)
+        return cls._instance
+    
+    def __init__(self):
+        if not self._initialized:
+            self._storage_context = None
+            self._index = None
 
-def _init_storage() -> StorageContext:
-    """Initialize a storage context with docstore + Chroma vector store."""
-    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
-    vector_store = ChromaVectorStore(chroma_collection=collection)
-    docstore = SimpleDocumentStore()
-    return StorageContext.from_defaults(docstore=docstore, vector_store=vector_store)
+            self._init_storage()
+            self._initialized = True
 
+    def _init_storage(self) -> StorageContext:
+        """Initialize a storage context with docstore + Chroma vector store."""
+        logger.info("Initializing LlamaIndex storage context...")
+        
+        # Set up the Vector Store (ChromaDB)
+        chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+        collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
+        vector_store = ChromaVectorStore(chroma_collection=collection)
 
-def _process_file(file_path: Path, storage_context: StorageContext, parser: CustomParser, kg_id: str) -> str:
+        # Load other stores from disk if they exist
+        try:
+            self._storage_context = StorageContext.from_defaults(
+                persist_dir=str(STORAGE_DIR),
+                vector_store=vector_store 
+            )
+            logger.info("Loaded existing storage context from disk.")
+        except FileNotFoundError:
+            logger.info("No existing storage found; creating new storage context.")
+            self._storage_context = StorageContext.from_defaults(
+                vector_store=vector_store
+            )
+
+        # Initialize the Index
+        self._index = VectorStoreIndex.from_vector_store(
+            vector_store=vector_store,
+            storage_context=self._storage_context
+        )
+        logger.info("LlamaIndex is ready.")
+
+    @property
+    def index(self):
+        if self._index is None:
+            raise ValueError("Index not initialized.")
+        return self._index
+
+    @property
+    def context(self):
+        if self._storage_context is None:
+            raise ValueError("Storage context not initialized.")
+        return self._storage_context
+        
+    def persist(self):
+        """
+        Saves the Docstore and IndexStore to disk (JSON files).
+        ChromaDB saves automatically, but LlamaIndex metadata needs this.
+        """
+        self.context.persist(persist_dir=str(STORAGE_DIR))
+        logger.info("Persisted storage to disk.")
+        
+
+def _process_file(
+        file_path: Path, 
+        parser: CustomParser, 
+        kg_id: str
+    ) -> str:
     """Parse file into a Document + Nodes, index them, and add to storage."""
-    raw_text = Path(file_path).read_text()
+    storage = LlamaStorage()
+
+    raw_text = file_path.read_text(encoding="utf-8")
 
     # Create Document
-    doc = Document(text=raw_text, metadata={"source": str(file_path)}, doc_id=kg_id)
+    doc = Document(
+        text=raw_text, 
+        metadata={"source": str(file_path)}, 
+        doc_id=kg_id
+    )
 
     # Parse into TextNodes
     nodes = parser.get_nodes_from_documents([doc])
@@ -64,63 +125,58 @@ def _process_file(file_path: Path, storage_context: StorageContext, parser: Cust
         n.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(node_id=doc.doc_id)
 
     # Store nodes documents and nodes in doc store
-    storage_context.docstore.add_documents([doc])
-    storage_context.docstore.add_documents(nodes)
-
-    # Insert into VectorStore
-    VectorStoreIndex(nodes, storage_context=storage_context)
+    storage.context.docstore.add_documents([doc])
+    storage.index.insert_nodes(nodes)
 
     return doc.doc_id
 
 
-def add_file(file_path: str, kg_id: str, storage_context: StorageContext | None = None):
+def add_file(
+        file_path: str, 
+        kg_id: str
+    ) -> str:
     """
     Add a file to the docstore + Chroma vector store.
     """
-    if storage_context is None:
-        storage_context = _init_storage()
+    storage = LlamaStorage()
 
     parser = CustomParser(include_metadata=True, include_prev_next_rel=True)
 
-    llama_id = _process_file(Path(file_path), storage_context, parser, kg_id)
+    doc_id = _process_file(Path(file_path), parser, kg_id)
 
-    storage_context.persist(persist_dir=str(STORAGE_DIR))
+    storage.persist()
 
-    logger.info(f"Added document {llama_id} from {file_path}.")
+    logger.info(f"Added document {doc_id} from {file_path}.")
     
-    return llama_id
+    return doc_id
 
 
-def load_existing_index() -> VectorStoreIndex:
-    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
+# def load_existing_index() -> VectorStoreIndex:
+#     chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+#     collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
     
-    vector_store = ChromaVectorStore(chroma_collection=collection)
-    storage_context = StorageContext.from_defaults(
-        persist_dir=str(STORAGE_DIR),
-        vector_store=vector_store
-    )
+#     vector_store = ChromaVectorStore(chroma_collection=collection)
+#     storage_context = StorageContext.from_defaults(
+#         persist_dir=str(STORAGE_DIR),
+#         vector_store=vector_store
+#     )
     
-    index = load_index_from_storage(storage_context)
+#     index = load_index_from_storage(storage_context)
     
-    return index
+#     return index
 
 
-def load_document(storage_dir: str, doc_id: str):
-    storage_context = StorageContext.from_defaults(persist_dir=storage_dir)
-    docstore = storage_context.docstore
-    return docstore.get_document(doc_id)
-
-
-def enrich_chunks_with_annotations(chunks: List[Dict], 
-                                   acronyms: Dict[str, str], 
-                                   entities: List[Dict]) -> List[Dict]:
+def annotate_chunk(
+        chunk: BaseNode, 
+        acronyms: Dict[str, str], 
+        entities: List[Dict]
+    ) -> BaseNode:
     """
-    Enrich each chunk with acronyms and entities that appear in its text.
+    Annotate each chunk with acronyms and entities that appear in its text.
 
     Parameters
     ----------
-    chunks : list of dict
+    chunk : BaseNode
         Each dict should have at least {"text": "..."}.
     acronyms : dict
         Mapping like {"SEMARNAT": "Secretaria de Medio Ambiente ..."}.
@@ -135,86 +191,73 @@ def enrich_chunks_with_annotations(chunks: List[Dict],
 
     Returns
     -------
-    list of dict
-        Same chunks, but with added keys:
-        - "acronyms_found": list of acronyms present
-        - "entities_found": list of entity dicts present
+    BaseNode
+        Same chunk, but with added keys:
+        - "acronyms": list of acronyms present
+        - "entities": list of entity dicts present
     """
-    for chunk in chunks:
-        text = chunk.get("text", "")
+    text = chunk.get_content()
 
-        # Find acronyms present
-        acronyms_found = {
-            acr: expansion
-            for acr, expansion in acronyms.items()
-            if acr in text or expansion in text
-        }
+    acronyms_found = [
+        {"short": acr, "long": expansion}
+        for acr, expansion in acronyms.items()
+        if acr in text or expansion in text
+    ]
 
-        # Find entities present by surface string
-        entities_found = [
-            ent for ent in entities 
-            if ent.get("surface") and ent["surface"] in text
-        ]
+    entities_found = [
+        ent for ent in entities
+        if ent.get("surface") and ent["surface"].lower() in text.lower()
+    ]
 
-        chunk["acronyms_found"] = acronyms_found
-        chunk["entities_found"] = entities_found
+    chunk.metadata["acronyms"] = json.dumps(acronyms_found)
+    chunk.metadata["entities"] = json.dumps(entities_found)  
 
-        logger.debug(f'For text chunk \n\n{text}')
-        logger.debug(f'Entities found \n\n {[ent.get("surface") for ent in entities_found]}')
-        logger.debug(f'Acronyms found \n\n {[key for key, _ in acronyms_found.items()]}')
+    logger.debug(f'For text chunk \n\n{text[:200]}...')
+    logger.debug(f'Entities found: {[ent.get("surface") for ent in entities_found]}')
+    logger.debug(f'Acronyms found: {[a.get("short") for a in acronyms_found]}')
 
-    return chunks
+    return chunk
 
 
-def enrich_document_chunks(doc_id: str, acronyms: Dict[str, str], entities: List[Dict]) -> None:
-    storage_context = load_existing_index().storage_context
-    docstore = storage_context.docstore
+def enrich_document_chunks(
+        doc_id: str, 
+        acronyms: Dict[str, str], 
+        entities: List[Dict]
+    ) -> None:
+    storage = LlamaStorage()
 
-    info = docstore.get_ref_doc_info(doc_id)
-    if not info:
+    ref_doc_info = storage.context.docstore.get_ref_doc_info(doc_id)
+    
+    if not ref_doc_info:
         logger.warning(f"No nodes found for doc_id={doc_id}")
         return
 
-    # enrich metadata in docstore
-    node_ids = info.node_ids
-    nodes = docstore.get_nodes(node_ids)
+    # Enrich metadata in docstore
+    node_ids = ref_doc_info.node_ids
+    nodes = storage.context.docstore.get_nodes(node_ids)
+    
     updated_nodes = []
 
     for node in nodes:
-        text = getattr(node, "text", "")
+        updated_node = annotate_chunk(node, acronyms, entities)
+        updated_nodes.append(updated_node)
 
-        acronyms_found = [
-            {"short": acr, "long": expansion}
-            for acr, expansion in acronyms.items()
-            if acr in text or expansion in text
-        ]
-        entities_found = [
-            ent for ent in entities
-            if ent.get("surface") and ent["surface"].lower() in text.lower()
-        ]
+    storage.index.delete_ref_doc(doc_id, delete_from_docstore=True)
+    storage.index.insert_nodes(updated_nodes)
 
-        node.metadata["acronyms"] = acronyms_found
-        node.metadata["entities"] = entities_found
-        updated_nodes.append(node)
+    storage.persist()
 
-        logger.debug(f'For text chunk \n\n{text[:200]}...')
-        logger.debug(f'Entities found: {[ent.get("surface") for ent in entities_found]}')
-        logger.debug(f'Acronyms found: {[a.get("short") for a in acronyms_found]}')
-
-    docstore.add_documents(updated_nodes)
-
-    storage_context.persist()
     logger.info(f"Enriched and persisted {len(updated_nodes)} chunks for document {doc_id}.")
 
 
 def add_communities_from_graph(kg):
-    
+    storage = LlamaStorage()
 
     if not kg.loaded:
         logger.warning("KnowledgeGraph not loaded; cannot add communities.")
         return
 
-    storage_context = load_existing_index().storage_context
+    storage_context = storage.context
     docstore = storage_context.docstore
     graph = kg.g
     schema = kg.schema
@@ -298,8 +341,9 @@ def main():
 
     args = parser.parse_args()
 
+    storage = LlamaStorage()
     if args.reset:
-        reset_storage()
+        storage.reset_storage()
     
     file_id = args.file
     file_path = f'output/{file_id}/auto/{file_id}_content_list.json'
@@ -311,11 +355,33 @@ if __name__ == "__main__":
     # main()
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
-    from src.graph import KnowledgeGraph
+    storage = LlamaStorage()
+    storage.reset()
 
-    kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
-    add_communities_from_graph(kg)
+    doc_id = '10170637'
+    json_file_path = Path(f'output/{doc_id}/auto/{doc_id}_content_list.json')
+    add_file(json_file_path, kg_id=doc_id)
+
+    # from src.graph import KnowledgeGraph
+
+    # kg = KnowledgeGraph.load_or_build('world-bank-kg.ttl', rebuild=False)
+    
+    # acronyms = {
+    #     "SEMARNAT": "Secretaria de Medio Ambiente y Recursos Naturales",
+    #     "UNBIS": "United Nations Bibliographic Information System"
+    # }
+
+    # entities = [
+    #     {"surface": "World Bank", "label": "ORG", "qid": "Q123", "safe_id": "World_Bank"},
+    #     {"surface": "SEMARNAT", "label": "ORG", "qid": "Q999", "safe_id": "SEMARNAT"},
+    # ]
+    
+    # enrich_document_chunks(
+    #     doc_id="10170637", 
+    #     acronyms=acronyms, 
+    #     entities=entities
+    # )
