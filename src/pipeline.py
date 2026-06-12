@@ -38,9 +38,14 @@ class IngestionPipeline:
             if not output_path or not output_path.exists():
                 logger.error(f"Failed to process document {doc_id}. Output path invalid.")
                 return False
-        except:
-            pass
-            
+
+            self.storage.add_file(output_path, kg_id=doc_id)
+            logger.info(f"Successfully ingested document {doc_id} into storage.")
+            return True
+        except Exception:
+            logger.exception(f"Failed to ingest document {doc_id}.")
+            return False
+
 
     def _document_exists(self, doc_id: str) -> bool:
         """

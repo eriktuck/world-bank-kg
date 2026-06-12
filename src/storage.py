@@ -4,10 +4,17 @@ from pathlib import Path
 from typing import Dict, List
 import json
 import time
+import os
 
 import chromadb
 from dotenv import load_dotenv
-from llama_index.core import Document, StorageContext, VectorStoreIndex, load_index_from_storage
+from llama_index.core import (
+    Document, 
+    StorageContext, 
+    VectorStoreIndex, 
+    load_index_from_storage,
+    Settings
+)
 from llama_index.core.schema import BaseNode
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -15,14 +22,16 @@ from llama_index.core.schema import NodeRelationship, RelatedNodeInfo
 from rdflib import Graph, Namespace, RDF, Literal
 
 from src.parser import CustomParser
+from src import config
 
 logger = logging.getLogger(__name__)
 
 load_dotenv(dotenv_path="secrets/.env")
 
-STORAGE_DIR = Path("./storage")
-CHROMA_DIR = Path("./chroma_db")
-COLLECTION_NAME = "documents"
+# Sourced from src.config so every storage path/name has a single source of truth.
+STORAGE_DIR = config.LINDEX_STORAGE_PATH
+CHROMA_DIR = config.CHROMA_PATH
+COLLECTION_NAME = config.COLLECTION_NAME
 
 
 from llama_index.embeddings.ollama import OllamaEmbedding
@@ -35,120 +44,124 @@ Settings.embed_model = OllamaEmbedding(
 )
 
 class LlamaStorage:
-    _instance = None
-    _initialized = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(LlamaStorage, cls).__new__(cls)
-        return cls._instance
-    
     def __init__(self):
-        if not self._initialized:
-            self._storage_context = None
-            self._index = None
+        """
+        Initializes the database connection.
+        If data exists, it loads it. If not, it sets up a fresh index.
+        """
+        self.chroma_client = chromadb.PersistentClient(path=config.CHROMA_PATH)
+        self.chroma_collection = self.chroma_client.get_or_create_collection(config.COLLECTION_NAME)
+        self.vector_store = ChromaVectorStore(chroma_collection=self.chroma_collection)
 
-            self._init_storage()
-            self._initialized = True
+        self.index = self._load_or_create_index()
 
-    def _init_storage(self) -> StorageContext:
-        """Initialize a storage context with docstore + Chroma vector store."""
-        logger.info("Initializing LlamaIndex storage context...")
+    def _load_or_create_index(self) -> VectorStoreIndex:
+        """Load existing index from storage, or create a new one if not found."""
+        docstore_path = os.path.join(config.LINDEX_STORAGE_PATH, "docstore.json")
         
-        # Set up the Vector Store (ChromaDB)
-        chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-        collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
-        vector_store = ChromaVectorStore(chroma_collection=collection)
+        if os.path.exists(docstore_path):
+            logger.info("Loading existing storage context from disk...")
 
-        # Load other stores from disk if they exist
-        try:
-            self._storage_context = StorageContext.from_defaults(
-                persist_dir=str(STORAGE_DIR),
-                vector_store=vector_store 
+            storage_context = StorageContext.from_defaults(
+                persist_dir=config.LINDEX_STORAGE_PATH,
+                vector_store=self.vector_store 
             )
-            logger.info("Loaded existing storage context from disk.")
-        except FileNotFoundError:
-            logger.info("No existing storage found; creating new storage context.")
-            self._storage_context = StorageContext.from_defaults(
-                vector_store=vector_store
+            index = load_index_from_storage(storage_context)
+
+        else:
+            logger.info("Creating new empty index...")
+            
+            storage_context = StorageContext.from_defaults(
+                vector_store=self.vector_store
             )
 
-        # Initialize the Index
-        self._index = VectorStoreIndex.from_vector_store(
-            vector_store=vector_store,
-            storage_context=self._storage_context
-        )
-        logger.info("LlamaIndex is ready.")
-
-    @property
-    def index(self):
-        if self._index is None:
-            raise ValueError("Index not initialized.")
-        return self._index
+            index = VectorStoreIndex.from_vector_store(
+                self.vector_store, 
+                storage_context=storage_context,
+                store_nodes_override=True # Important: keeps text in JSON, vectors in Chroma
+            )
+        
+        return index
 
     @property
     def context(self):
-        if self._storage_context is None:
-            raise ValueError("Storage context not initialized.")
-        return self._storage_context
-        
+        return self.index.storage_context
+
     def persist(self):
         """
         Saves the Docstore and IndexStore to disk (JSON files).
         ChromaDB saves automatically, but LlamaIndex metadata needs this.
         """
-        self.context.persist(persist_dir=str(STORAGE_DIR))
-        logger.info("Persisted storage to disk.")
+        target_dir = config.LINDEX_STORAGE_PATH
         
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
 
-def _process_file(
+        self.context.persist(persist_dir=str(target_dir))
+        logger.info(f"Persisted storage to {target_dir}.")
+        
+    def _process_and_insert(
+        self,
         file_path: Path, 
         parser: CustomParser, 
         kg_id: str
     ) -> str:
-    """Parse file into a Document + Nodes, index them, and add to storage."""
-    storage = LlamaStorage()
+        """Parse file into a Document + Nodes, index them, and add to storage."""
+        raw_text = file_path.read_text(encoding="utf-8")
 
-    raw_text = file_path.read_text(encoding="utf-8")
+        # Create Document
+        doc = Document(
+            text=raw_text, 
+            metadata={"source": str(file_path)}, 
+            doc_id=kg_id
+        )
 
-    # Create Document
-    doc = Document(
-        text=raw_text, 
-        metadata={"source": str(file_path)}, 
-        doc_id=kg_id
-    )
+        # Parse into TextNodes
+        nodes = parser.get_nodes_from_documents([doc])
 
-    # Parse into TextNodes
-    nodes = parser.get_nodes_from_documents([doc])
+        # Store nodes documents and nodes in doc store
+        self.context.docstore.add_documents([doc])
+        self.index.insert_nodes(nodes)
 
-    for n in nodes:
-        n.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(node_id=doc.doc_id)
+        return doc.doc_id
 
-    # Store nodes documents and nodes in doc store
-    storage.context.docstore.add_documents([doc])
-    storage.index.insert_nodes(nodes)
-
-    return doc.doc_id
-
-
-def add_file(
+    def add_file(
+        self,
         file_path: str, 
         kg_id: str
     ) -> str:
-    """
-    Add a file to the docstore + Chroma vector store.
-    """
-    storage = LlamaStorage()
+        """
+        Add a file to the docstore + Chroma vector store.
+        """
+        path_obj = Path(file_path)
+        if not path_obj.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
 
-    parser = CustomParser(include_metadata=True, include_prev_next_rel=True)
+        parser = CustomParser(include_metadata=True, include_prev_next_rel=True)
 
-    doc_id = _process_file(Path(file_path), parser, kg_id)
+        logger.info(f"Processing {file_path}...")
 
-    storage.persist()
+        self._process_and_insert(path_obj, parser, kg_id)
+        self.persist()
 
-    logger.info(f"Added document {doc_id} from {file_path}.")
+        logger.info(f"Successfully added document {kg_id}.")
+        
+        return kg_id
+
+    def clear(self):
+        """Nuke it. Useful for resetting."""
+        print("Clearing all data...")
+        
+        # Delete Chroma collection
+        self.chroma_client.delete_collection(config.COLLECTION_NAME)
+        
+        # Delete local files
+        if os.path.exists(config.LINDEX_STORAGE_PATH):
+            shutil.rmtree(config.LINDEX_STORAGE_PATH)
+        
+        print("Storage cleared.")
+
     
-    return doc_id
 
 
 # def load_existing_index() -> VectorStoreIndex:
@@ -262,8 +275,7 @@ def add_communities_from_graph(kg):
     graph = kg.g
     schema = kg.schema
 
-    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
+    collection = storage.chroma_collection
     existing_ids = set(collection.get()["ids"])
 
     added = 0
@@ -311,7 +323,7 @@ def add_communities_from_graph(kg):
         docstore.add_documents(new_docs)
         storage_context.vector_store.add(nodes=new_docs)
 
-        storage_context.persist(persist_dir=str(STORAGE_DIR))
+        storage.persist()
         logger.info(f"Added {added} new community summaries to existing vector store.")
     else:
         logger.info("No new community summaries to add.")
@@ -343,12 +355,13 @@ def main():
 
     storage = LlamaStorage()
     if args.reset:
-        storage.reset_storage()
-    
+        storage.clear()
+        storage = LlamaStorage()
+
     file_id = args.file
     file_path = f'output/{file_id}/auto/{file_id}_content_list.json'
 
-    add_file(file_path, kg_id=file_id)
+    storage.add_file(file_path, kg_id=file_id)
 
 
 if __name__ == "__main__":
@@ -360,11 +373,10 @@ if __name__ == "__main__":
     )
 
     storage = LlamaStorage()
-    storage.reset()
 
     doc_id = '10170637'
     json_file_path = Path(f'output/{doc_id}/auto/{doc_id}_content_list.json')
-    add_file(json_file_path, kg_id=doc_id)
+    storage.add_file(json_file_path, kg_id=doc_id)
 
     # from src.graph import KnowledgeGraph
 
