@@ -6,7 +6,7 @@ from llama_index.llms.ollama import Ollama
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import VectorIndexRetriever
 
-from src.storage import load_existing_index  # same loader used in your pipeline
+from src.storage import LlamaStorage
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,7 +26,8 @@ Settings.embed_model = Settings.embed_model
 def start_chat():
     """Interactive chat over the unified World Bank KG vector index."""
     logger.info("Loading existing vector index...")
-    index: VectorStoreIndex = load_existing_index()
+    storage = LlamaStorage()
+    index: VectorStoreIndex = storage.index
 
     retriever = VectorIndexRetriever(index=index, similarity_top_k=3)
     query_engine = RetrieverQueryEngine.from_args(
